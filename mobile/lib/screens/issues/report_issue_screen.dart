@@ -8,7 +8,10 @@ import 'package:http/http.dart' as http;
 import '../../services/auth_service.dart';
 
 class ReportIssueScreen extends StatefulWidget {
-  const ReportIssueScreen({super.key});
+  final String? initialCategory;
+  final bool autoPickImage;
+  
+  const ReportIssueScreen({super.key, this.initialCategory, this.autoPickImage = false});
 
   @override
   State<ReportIssueScreen> createState() => _ReportIssueScreenState();
@@ -18,20 +21,74 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
-  String _selectedCategory = 'Damaged Roads';
+  late String _selectedCategory;
   final List<File> _images = [];
   bool _isSubmitting = false;
   Position? _position;
 
   final categories = [
-    'Damaged Roads', 'Broken Streetlights', 'Water/Sanitation',
     'School Infrastructure', 'Healthcare Facilities', 'Security Concerns', 'Other'
+  ];
+  
+  String? _selectedVillage;
+  final _villages = [
+    'Muthungue', 'Nditime', 'Maskikalini', 'Kamwiu', 'Ituusya', 'Ivitasya',
+    'Kyamatu/Nzanzu', 'Nzunguni', 'Kasasi', 'Kaluasi', 'Other'
   ];
 
   @override
   void initState() {
     super.initState();
+    _selectedCategory = widget.initialCategory ?? 'Damaged Roads';
     _getLocation();
+    if (widget.autoPickImage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showImageSourceDialog());
+    }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a3e),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Add Photo', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(Icons.camera_alt, 'Camera', ImageSource.camera),
+                _buildSourceOption(Icons.photo_library, 'Gallery', ImageSource.gallery),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceOption(IconData icon, String label, ImageSource source) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        _pickImage(source);
+      },
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: const Color(0xFF6366f1).withOpacity(0.2),
+            child: Icon(icon, color: const Color(0xFF6366f1), size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(color: Colors.white)),
+        ],
+      ),
+    );
   }
 
   Future<void> _getLocation() async {
