@@ -18,7 +18,9 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadIssues();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadIssues();
+    });
   }
 
   Future<void> _loadIssues() async {
@@ -68,6 +70,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
             SnackBar(content: Text('Failed to load issues: ${response.statusCode}'), backgroundColor: Colors.red),
           );
         }
+      }
     } catch (e) {
       // Mock data for demo/fallback
       if (mounted) {

@@ -96,7 +96,9 @@ class _BursaryScreenState extends State<BursaryScreen> {
   @override
   void initState() {
     super.initState();
-    _loadApplications();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadApplications();
+    });
   }
 
   Future<void> _loadApplications() async {

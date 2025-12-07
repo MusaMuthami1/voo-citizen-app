@@ -27,7 +27,13 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   Position? _position;
 
   final categories = [
-    'School Infrastructure', 'Healthcare Facilities', 'Security Concerns', 'Other'
+    'Damaged Roads',
+    'Water/Sanitation', 
+    'School Infrastructure', 
+    'Healthcare Facilities', 
+    'Security Concerns',
+    'Broken Streetlights',
+    'Other'
   ];
   
   String? _selectedVillage;
@@ -35,6 +41,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     'Muthungue', 'Nditime', 'Maskikalini', 'Kamwiu', 'Ituusya', 'Ivitasya',
     'Kyamatu/Nzanzu', 'Nzunguni', 'Kasasi', 'Kaluasi', 'Other'
   ];
+  String _customVillage = '';
 
   @override
   void initState() {
@@ -237,6 +244,28 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setState(() => _selectedCategory = v!),
               ),
+              const SizedBox(height: 16),
+
+              // Village Selection
+              DropdownButtonFormField<String>(
+                value: _selectedVillage,
+                dropdownColor: const Color(0xFF1a1a3e),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(hintText: 'Select Village'),
+                items: _villages.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                onChanged: (v) => setState(() => _selectedVillage = v),
+              ),
+              if (_selectedVillage == 'Other') ...[
+                const SizedBox(height: 12),
+                TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your village name',
+                    hintStyle: TextStyle(color: Colors.white54),
+                  ),
+                  onChanged: (v) => _customVillage = v,
+                ),
+              ],
               const SizedBox(height: 16),
 
               TextField(

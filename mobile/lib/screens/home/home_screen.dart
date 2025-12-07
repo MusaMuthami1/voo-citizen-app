@@ -126,6 +126,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildQuickAction(IconData icon, String label, Color color, double screenWidth, 
+      {String? category, bool autoPick = false, bool isBursary = false}) {
+    return GestureDetector(
+      onTap: () {
+        if (isBursary) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const BursaryScreen()));
+        } else {
+          Navigator.push(
+            context, 
+            MaterialPageRoute(builder: (_) => ReportIssueScreen(
+              initialCategory: category,
+              autoPickImage: autoPick,
+            )),
+          );
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: screenWidth * 0.08, color: color),
+            const SizedBox(height: 8),
+            Text(label, style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.035, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileOption(IconData icon, String title, VoidCallback onTap) {
+    return Card(
+      color: const Color(0xFF1a1a3e),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF6366f1)),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+        onTap: onTap,
+      ),
+    );
+  }
+
   Widget _buildProfileTab(AuthService auth, Map<String, dynamic>? user) {
     return Container(
       decoration: const BoxDecoration(
@@ -201,8 +252,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showEditProfile(BuildContext context) {
-    final nameController = TextEditingController(text: widget.user?['fullName'] ?? '');
-    final phoneController = TextEditingController(text: widget.user?['phone'] ?? '');
+    final auth = context.read<AuthService>();
+    final nameController = TextEditingController(text: auth.user?['fullName'] ?? '');
+    final phoneController = TextEditingController(text: auth.user?['phone'] ?? '');
 
     showDialog(
       context: context,
@@ -261,23 +313,38 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a3e),
+        title: const Text('Security Status', style: TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 64),
-            const SizedBox(height: 16),
-            const Text('System Secure', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('• End-to-End Encryption Enabled\n• Malware Protection Active\n• Data Backups Configured\n• No Unconfigured Datasets Found', 
-              textAlign: TextAlign.left,
-              style: TextStyle(color: Colors.white.withOpacity(0.7), height: 1.5)),
-            const SizedBox(height: 8),
-            const Divider(color: Colors.white24),
-            Text('Last Scan: Just now', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+            _buildSecurityItem(Icons.https, 'HTTPS API Connection', true),
+            _buildSecurityItem(Icons.lock, 'JWT Authentication', true),
+            _buildSecurityItem(Icons.storage, 'Local Storage (SharedPrefs)', true),
+            _buildSecurityItem(Icons.cloud_off, 'Cloud Backup', false),
+            _buildSecurityItem(Icons.security, 'End-to-End Encryption', false),
+            const SizedBox(height: 12),
+            Text('Note: Some features require backend configuration.', 
+              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11, fontStyle: FontStyle.italic)),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close', style: TextStyle(color: Color(0xFF6366f1)))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurityItem(IconData icon, String label, bool enabled) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(enabled ? Icons.check_circle : Icons.cancel, color: enabled ? Colors.green : Colors.red, size: 20),
+          const SizedBox(width: 8),
+          Icon(icon, color: Colors.white54, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13))),
         ],
       ),
     );
@@ -341,19 +408,6 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close', style: TextStyle(color: Color(0xFF6366f1)))),
         ],
-      ),
-    );
-  }
-
-  Widget _buildProfileOption(IconData icon, String label, VoidCallback onTap) {
-    return Card(
-      color: const Color(0xFF1a1a3e),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF6366f1)),
-        title: Text(label, style: const TextStyle(color: Colors.white)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
-        onTap: onTap,
       ),
     );
   }
