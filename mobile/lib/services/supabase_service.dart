@@ -119,6 +119,46 @@ class SupabaseService {
     }
   }
 
+  // ============ PASSWORD RESET ============
+
+  static Future<Map<String, dynamic>> updatePassword({
+    required String phone,
+    required String newPassword,
+  }) async {
+    try {
+      // First find the user
+      final findUrl = '$supabaseUrl/rest/v1/app_users?phone=eq.$phone&select=id';
+      final findRes = await http.get(Uri.parse(findUrl), headers: _headers);
+      
+      if (findRes.statusCode == 200) {
+        final users = jsonDecode(findRes.body);
+        if (users is List && users.isEmpty) {
+          return {'success': false, 'error': 'User not found'};
+        }
+        
+        final userId = users.first['id'];
+        
+        // Update the password
+        final updateUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
+        final updateRes = await http.patch(
+          Uri.parse(updateUrl),
+          headers: _headers,
+          body: jsonEncode({'password_hash': hashPassword(newPassword)}),
+        );
+        
+        if (updateRes.statusCode == 200 || updateRes.statusCode == 204) {
+          return {'success': true};
+        } else {
+          return {'success': false, 'error': 'Failed to update password'};
+        }
+      } else {
+        return {'success': false, 'error': 'User not found'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Password reset failed: $e'};
+    }
+  }
+
   // ============ ANNOUNCEMENTS ============
 
   static Future<List<Map<String, dynamic>>> getAnnouncements() async {

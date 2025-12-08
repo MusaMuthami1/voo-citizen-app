@@ -4,6 +4,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'services/auth_service.dart';
 import 'services/supabase_service.dart';
+import 'services/app_update_service.dart';
 import 'providers/theme_provider.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -28,14 +29,41 @@ void main() async {
   );
 }
 
-class VooCitizenApp extends StatelessWidget {
+class VooCitizenApp extends StatefulWidget {
   const VooCitizenApp({super.key});
+
+  @override
+  State<VooCitizenApp> createState() => _VooCitizenAppState();
+}
+
+class _VooCitizenAppState extends State<VooCitizenApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for updates after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdates();
+    });
+  }
+
+  Future<void> _checkForUpdates() async {
+    final result = await AppUpdateService.checkForUpdate();
+    if (result['updateRequired'] == true && mounted) {
+      final ctx = _navigatorKey.currentContext;
+      if (ctx != null) {
+        AppUpdateService.showUpdateDialog(ctx, result['downloadUrl'] ?? '');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
         return MaterialApp(
+          navigatorKey: _navigatorKey,
           title: 'VOO Citizen',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.themeData,
@@ -49,4 +77,3 @@ class VooCitizenApp extends StatelessWidget {
     );
   }
 }
-

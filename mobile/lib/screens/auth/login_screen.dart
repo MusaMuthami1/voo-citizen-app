@@ -435,10 +435,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.security, size: 16, color: Colors.green.withOpacity(0.7)),
+                      Icon(Icons.verified_user, size: 16, color: Colors.green.withOpacity(0.7)),
                       const SizedBox(width: 6),
                       Text(
-                        'Secured with 256-bit encryption',
+                        'Secured by Firebase & Supabase',
                         style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11),
                       ),
                     ],
