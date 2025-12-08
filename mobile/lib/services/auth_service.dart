@@ -7,6 +7,10 @@ class AuthService extends ChangeNotifier {
   // Supabase REST API base URL (for backwards compatibility)
   static const String baseUrl = '${SupabaseService.supabaseUrl}/rest/v1';
   
+  // Session expires after 6 days of inactivity (in milliseconds)
+  static const int sessionTimeoutDays = 6;
+  static const int sessionTimeoutMs = sessionTimeoutDays * 24 * 60 * 60 * 1000;
+  
   String? _token;
   Map<String, dynamic>? _user;
   bool _isLoading = false;
@@ -25,7 +29,30 @@ class AuthService extends ChangeNotifier {
     _token = prefs.getString('token');
     final userData = prefs.getString('user');
     if (userData != null) _user = jsonDecode(userData);
+    
+    // Check for session expiry (6 days of inactivity)
+    final lastActivity = prefs.getInt('last_activity');
+    if (_token != null && lastActivity != null) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      if (now - lastActivity > sessionTimeoutMs) {
+        // Session expired, force logout
+        await logout();
+        return;
+      }
+    }
+    
+    // Update last activity timestamp
+    if (_token != null) {
+      await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
+    }
+    
     notifyListeners();
+  }
+
+  // Call this method when user performs any action to keep session alive
+  Future<void> updateLastActivity() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<Map<String, dynamic>> login(String phone, String password) async {
@@ -51,6 +78,7 @@ class AuthService extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
         await prefs.setString('user', jsonEncode(_user));
+        await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
         notifyListeners();
         return {'success': true};
       } else {
@@ -90,6 +118,7 @@ class AuthService extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
         await prefs.setString('user', jsonEncode(_user));
+        await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
         notifyListeners();
         return {'success': true};
       } else {

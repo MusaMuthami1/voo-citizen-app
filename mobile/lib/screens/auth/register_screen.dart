@@ -185,56 +185,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    // Validation
+    // Validation - basic fields only (OTP is the password now)
     if (_nameController.text.isEmpty || _phoneController.text.isEmpty ||
-        _idController.text.isEmpty || _passwordController.text.isEmpty) {
+        _idController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields'), backgroundColor: Colors.red),
       );
       return;
     }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
+    // OTP verification is REQUIRED - the OTP becomes the password
+    if (!_otpVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Please verify your phone number first. The OTP will be your password.'), backgroundColor: Colors.orange),
       );
       return;
     }
-
-    // Strong password validation
-    final password = _passwordController.text;
-    if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 8 characters'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    if (!RegExp(r'[a-zA-Z]').hasMatch(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must contain at least one letter'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    if (!RegExp(r'[0-9]').hasMatch(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must contain at least one number'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must contain at least one special character (!@#\$%^&*)'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    // Phone verification is optional - can be enabled later when SHA-1 fingerprints are configured
-    // if (!_otpVerified) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Please verify your phone number first'), backgroundColor: Colors.orange),
-    //   );
-    //   return;
-    // }
 
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -243,21 +209,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Use the OTP as the password
+    final otpPassword = _otpController.text;
+
     final auth = context.read<AuthService>();
     final result = await auth.register(
       _nameController.text,
       _phoneController.text,
       _idController.text,
-      _passwordController.text,
+      otpPassword, // Using OTP as password
       village: _selectedVillage == 'Other' ? _otherVillageController.text : _selectedVillage,
     );
 
     if (mounted) {
       if (result['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully! ✅'), backgroundColor: Colors.green),
+        // Show dialog with password info
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF1a1a3e),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 28),
+                SizedBox(width: 8),
+                Text('Account Created!', style: TextStyle(color: Colors.white)),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your account has been created successfully!',
+                  style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366f1).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF6366f1)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Your Login Credentials:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text('Phone: ${_phoneController.text}', style: const TextStyle(color: Colors.white)),
+                      const SizedBox(height: 4),
+                      Text('Password: $otpPassword', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 18)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '⚠️ Please save this password! You can change it later in Settings.',
+                  style: TextStyle(color: Colors.orange.withOpacity(0.9), fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366f1)),
+                child: const Text('Got it, Login Now', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
         );
-        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['error']), backgroundColor: Colors.red),
@@ -497,50 +522,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                       const SizedBox(height: 16),
 
-                      // Row 2: Password and Confirm Password
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: _buildInputDecoration(
-                                'Password',
-                                Icons.lock_outline,
-                                suffix: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                    color: Colors.white54,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      // Info about OTP as password
+                      if (_otpVerified)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green, size: 20),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Phone verified! Your OTP will be your password.',
+                                  style: TextStyle(color: Colors.green, fontSize: 12),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _confirmPasswordController,
-                              obscureText: _obscureConfirmPassword,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: _buildInputDecoration(
-                                'Confirm',
-                                Icons.lock_outline,
-                                suffix: IconButton(
-                                  icon: Icon(
-                                    _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                                    color: Colors.white54,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6366f1).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF6366f1).withOpacity(0.3)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Color(0xFF6366f1), size: 20),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Verify your phone to get your password (OTP).',
+                                  style: TextStyle(color: Color(0xFF6366f1), fontSize: 12),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
                       const SizedBox(height: 20),
 
                       // CAPTCHA
