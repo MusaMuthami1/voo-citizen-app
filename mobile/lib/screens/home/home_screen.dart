@@ -9,6 +9,7 @@ import '../issues/report_issue_screen.dart';
 import '../issues/my_issues_screen.dart';
 import '../auth/login_screen.dart';
 import '../../services/supabase_service.dart';
+import '../../services/dashboard_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -201,7 +202,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refreshHome() async {
     if (await StorageService.isOnline()) {
-      final announcements = await SupabaseService.getAnnouncements();
+      // Try dashboard first, fallback to Supabase
+      var announcements = await DashboardService.getAnnouncements();
+      if (announcements.isEmpty) {
+        announcements = await SupabaseService.getAnnouncements();
+      }
       await StorageService.cacheAnnouncements(announcements);
       if (mounted) setState(() {});
     } else {

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/supabase_service.dart';
+import '../../services/dashboard_service.dart';
 import '../../services/storage_service.dart';
 
 class BursaryScreen extends StatefulWidget {
@@ -121,16 +122,22 @@ class _BursaryScreenState extends State<BursaryScreen> {
       });
     }
 
-    // 2. Fetch fresh data from network
+    // 2. Fetch fresh data from network - try Dashboard first, then Supabase
     try {
       if (await StorageService.isOnline()) {
-        final loadedApps = await SupabaseService.getMyBursaryApplications(userId);
+        // Try dashboard API first
+        var loadedApps = await DashboardService.getMyBursaryApplications();
+        
+        // Fallback to Supabase if dashboard returns empty
+        if (loadedApps.isEmpty && userId.isNotEmpty) {
+          loadedApps = await SupabaseService.getMyBursaryApplications(userId);
+        }
+        
         if (mounted) {
           setState(() {
             _applications = loadedApps;
             _isLoading = false;
           });
-          // Update cache
           await StorageService.cacheBursaries(loadedApps);
         }
       } else if (_applications.isEmpty) {
@@ -174,15 +181,28 @@ HELB: ${_hasHelb ? 'Yes' : 'No'}
 Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '(${_sponsorshipDetailsController.text})' : ''}
 ''';
 
-      final result = await SupabaseService.applyForBursary(
-        userId: auth.user!['id'],
+      // Try dashboard API first, fallback to Supabase
+      var result = await DashboardService.applyForBursary(
         institutionName: _institutionController.text,
-        institutionType: _institutionType,
         course: _courseController.text,
         yearOfStudy: _yearController.text,
-        amountRequested: double.tryParse(_annualFeesController.text.replaceAll(',', '')),
+        institutionType: _institutionType,
         reason: verboseReason,
+        amountRequested: double.tryParse(_annualFeesController.text.replaceAll(',', '')),
       );
+      
+      // Fallback to Supabase if dashboard fails
+      if (result['success'] != true && auth.user != null) {
+        result = await SupabaseService.applyForBursary(
+          userId: auth.user!['id'],
+          institutionName: _institutionController.text,
+          institutionType: _institutionType,
+          course: _courseController.text,
+          yearOfStudy: _yearController.text,
+          amountRequested: double.tryParse(_annualFeesController.text.replaceAll(',', '')),
+          reason: verboseReason,
+        );
+      }
 
       if (result['success'] == true) {
         if (mounted) {
