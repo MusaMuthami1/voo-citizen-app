@@ -169,7 +169,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               crossAxisCount: 2,
                               mainAxisSpacing: 16,
                               crossAxisSpacing: 16,
-                              childAspectRatio: 1.5,
+                              childAspectRatio: 1.3,
                               children: [
                                 _buildServiceCard(Icons.badge_outlined, 'Lost ID', 'Report lost ID', const Color(0xFFEF4444), () => _showLostIdForm(context)),
                                 _buildServiceCard(Icons.feedback_outlined, 'Feedback', 'Send suggestions', const Color(0xFF3B82F6), () => _showFeedbackForm(context)),
