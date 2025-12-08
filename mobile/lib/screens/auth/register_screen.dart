@@ -25,6 +25,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _generatedPassword;
   bool _passwordCopied = false;
   
+  // OTP Verification State
+  bool _otpSent = false;
+  bool _otpVerified = false;
+  final _otpController = TextEditingController();
+  String? _sentOtp; // In production, this would be server-side only
+  
   final _villages = [
     'Muthungue', 'Nditime', 'Maskikalini', 'Kamwiu', 'Ituusya', 'Ivitasya',
     'Kyamatu/Nzanzu', 'Nzunguni', 'Kasasi', 'Kaluasi', 'Other'
@@ -56,6 +62,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _captchaController.clear();
     });
   }
+
+  // Send OTP to phone number
+  Future<void> _sendOtp() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty || phone.length < 9) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid phone number first'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    
+    // Generate OTP (in production this would be server-side)
+    _sentOtp = (100000 + DateTime.now().millisecondsSinceEpoch % 900000).toString().substring(0, 6);
+    setState(() => _otpSent = true);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('OTP sent to +254$phone: $_sentOtp'), backgroundColor: Colors.green, duration: const Duration(seconds: 5)),
+    );
+  }
+
+  // Verify OTP
+  void _verifyOtp() {
+    if (_otpController.text == _sentOtp) {
+      setState(() => _otpVerified = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone verified! ✅'), backgroundColor: Colors.green),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid OTP. Try again.'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
 
   void _showTermsDialog() {
     showDialog(
@@ -217,6 +257,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_nameController.text.isEmpty || _phoneController.text.isEmpty || _idController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Phone OTP verification is REQUIRED
+    if (!_otpVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please verify your phone number with OTP'), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -394,14 +442,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Phone Number
-                      TextField(
-                        controller: _phoneController,
-                        focusNode: _phoneFocusNode,
-                        keyboardType: TextInputType.phone,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: _buildInputDecoration('Phone Number', Icons.phone_android, showPrefix: _phoneFocusNode.hasFocus || _phoneController.text.isNotEmpty),
+                      // Phone Number with OTP Verification
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _phoneController,
+                              focusNode: _phoneFocusNode,
+                              keyboardType: TextInputType.phone,
+                              enabled: !_otpVerified,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: _buildInputDecoration(
+                                'Phone Number',
+                                Icons.phone_android,
+                                showPrefix: _phoneFocusNode.hasFocus || _phoneController.text.isNotEmpty,
+                                suffix: _otpVerified
+                                    ? const Icon(Icons.check_circle, color: Colors.green)
+                                    : null,
+                              ),
+                            ),
+                          ),
+                          if (!_otpVerified) ...[
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _otpSent ? null : _sendOtp,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF6366f1),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: Text(_otpSent ? 'Sent' : 'Get OTP', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
+                      
+                      // OTP Input (shown after Send OTP)
+                      if (_otpSent && !_otpVerified) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _otpController,
+                                keyboardType: TextInputType.number,
+                                maxLength: 6,
+                                style: const TextStyle(color: Colors.white, letterSpacing: 4),
+                                decoration: InputDecoration(
+                                  hintText: 'Enter OTP',
+                                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                                  counterText: '',
+                                  filled: true,
+                                  fillColor: const Color(0xFF0f0f23).withOpacity(0.5),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _verifyOtp,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text('Verify', style: TextStyle(color: Colors.white)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 16),
 
                       // Village Selection
@@ -422,26 +536,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                       const SizedBox(height: 16),
 
-                      // Generate Password Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton.icon(
-                          onPressed: _generatedPassword != null && _passwordCopied ? null : _generateAndShowPassword,
-                          icon: Icon(_generatedPassword != null && _passwordCopied ? Icons.check : Icons.key),
-                          label: Text(_generatedPassword != null && _passwordCopied ? 'Password Ready ✓' : 'Generate Password'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _generatedPassword != null && _passwordCopied ? Colors.green : const Color(0xFF6366f1),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      // Password Field with Generate Icon
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0f0f23).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _generatedPassword != null && _passwordCopied
+                                ? Colors.green
+                                : Colors.white.withOpacity(0.1),
                           ),
                         ),
-                      ),
-                      if (_generatedPassword == null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text('A strong password will be generated for you', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                child: Text(
+                                  _generatedPassword != null && _passwordCopied 
+                                      ? 'Password Ready ✓' 
+                                      : 'Tap icon to generate password',
+                                  style: TextStyle(
+                                    color: _generatedPassword != null && _passwordCopied 
+                                        ? Colors.green 
+                                        : Colors.white.withOpacity(0.4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: _generatedPassword != null && _passwordCopied 
+                                    ? Colors.green 
+                                    : const Color(0xFF6366f1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: IconButton(
+                                onPressed: _generatedPassword != null && _passwordCopied ? null : _generateAndShowPassword,
+                                icon: Icon(
+                                  _generatedPassword != null && _passwordCopied ? Icons.check : Icons.key,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
                       const SizedBox(height: 20),
 
                       // CAPTCHA
