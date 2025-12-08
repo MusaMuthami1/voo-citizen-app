@@ -1,8 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
+import '../../services/supabase_service.dart';
+import 'issue_details_screen.dart';
 
 class MyIssuesScreen extends StatefulWidget {
   const MyIssuesScreen({super.key});
@@ -26,80 +27,52 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
   Future<void> _loadIssues() async {
     final auth = context.read<AuthService>();
     
-    // Demo mode bypass
-    if (auth.user?['phone'] == '712345678') {
-      setState(() {
-        _issues = [
-            {
-              'title': 'Damaged Road at Market',
-              'category': 'Damaged Roads',
-              'status': 'in_progress',
-              'images': ['https://via.placeholder.com/150'],
-              'date': '2023-10-25'
-            },
-            {
-              'title': 'No Water Supply',
-              'category': 'Water/Sanitation',
-              'status': 'pending',
-              'images': [],
-              'date': '2023-11-01'
-            }
-        ];
-        _isLoading = false;
-      });
+    // Check connectivity
+    final isOnline = await StorageService.isOnline();
+    
+    if (!isOnline) {
+      final cachedIssues = StorageService.getCachedIssues();
+      if (mounted) {
+        setState(() {
+          _issues = cachedIssues;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You are offline. Showing cached issues.'), backgroundColor: Colors.orange),
+        );
+      }
+      return;
+    }
+
+    // Get user ID
+    final userId = auth.user?['id']?.toString();
+    if (userId == null || userId.isEmpty) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
       return;
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/issues/my'),
-        headers: {'Authorization': 'Bearer ${auth.token}'},
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _issues = data['issues'] ?? [];
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load issues: ${response.statusCode}'), backgroundColor: Colors.red),
-          );
-        }
-      }
-    } catch (e) {
-      // Mock data for demo/fallback
+      final loadedIssues = await SupabaseService.getMyIssues(userId);
       if (mounted) {
         setState(() {
-          _issues = [
-            {
-              'title': 'Damaged Road at Market',
-              'category': 'Damaged Roads',
-              'status': 'in_progress',
-              'images': ['https://via.placeholder.com/150'],
-              'date': '2023-10-25'
-            },
-            {
-              'title': 'No Water Supply',
-              'category': 'Water/Sanitation',
-              'status': 'pending',
-              'images': [],
-              'date': '2023-11-01'
-            },
-            {
-              'title': 'Broken Streetlight',
-              'category': 'Broken Streetlights',
-              'status': 'resolved',
-              'images': [],
-              'date': '2023-09-15'
-            }
-          ];
+          _issues = loadedIssues;
           _isLoading = false;
         });
+        StorageService.cacheIssues(loadedIssues);
+      }
+    } catch (e) {
+      // Fallback to cache
+      final cachedIssues = StorageService.getCachedIssues();
+      if (mounted) {
+        setState(() {
+          _issues = cachedIssues;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Connection failed. Showing cached issues.'), backgroundColor: Colors.orange),
+        );
       }
     }
   }
@@ -147,39 +120,49 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                             itemCount: _issues.length,
                             itemBuilder: (ctx, i) {
                               final issue = _issues[i];
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(16),
-                                  leading: issue['images']?.isNotEmpty == true
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Image.network(issue['images'][0], width: 60, height: 60, fit: BoxFit.cover),
-                                        )
-                                      : Container(
-                                          width: 60, height: 60,
-                                          decoration: BoxDecoration(color: const Color(0xFF6366f1).withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-                                          child: const Icon(Icons.image, color: Color(0xFF6366f1)),
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => IssueDetailsScreen(issue: issue),
+                                    ),
+                                  );
+                                },
+                                child: Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.all(16),
+                                    leading: issue['images']?.isNotEmpty == true
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(issue['images'][0], width: 60, height: 60, fit: BoxFit.cover),
+                                          )
+                                        : Container(
+                                            width: 60, height: 60,
+                                            decoration: BoxDecoration(color: const Color(0xFF6366f1).withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                                            child: const Icon(Icons.image, color: Color(0xFF6366f1)),
+                                          ),
+                                    title: Text(issue['title'] ?? 'Untitled', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Text(issue['category'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                                        const SizedBox(height: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusColor(issue['status'] ?? 'pending').withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            (issue['status'] ?? 'pending').toUpperCase(),
+                                            style: TextStyle(color: _getStatusColor(issue['status'] ?? 'pending'), fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                  title: Text(issue['title'] ?? 'Untitled', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 4),
-                                      Text(issue['category'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(issue['status'] ?? 'pending').withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          (issue['status'] ?? 'pending').toUpperCase(),
-                                          style: TextStyle(color: _getStatusColor(issue['status'] ?? 'pending'), fontSize: 10, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

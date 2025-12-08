@@ -1,14 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
+import 'supabase_service.dart';
 
 class AuthService extends ChangeNotifier {
-  static const String baseUrl = 'https://voo-citizen-api.onrender.com/api';
-  
-  // Demo credentials for testing
-  static const String demoPhone = '712345678';
-  static const String demoPassword = 'demo1234';
+  // Supabase REST API base URL (for backwards compatibility)
+  static const String baseUrl = '${SupabaseService.supabaseUrl}/rest/v1';
   
   String? _token;
   Map<String, dynamic>? _user;
@@ -36,82 +33,70 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Demo mode: Allow login with test credentials
-      if (phone == demoPhone && password == demoPassword) {
-        _token = 'demo_token_${DateTime.now().millisecondsSinceEpoch}';
-        _user = {
-          'id': 'demo_user_001',
-          'fullName': 'Demo User',
-          'phone': '+254$demoPhone',
-          'issuesReported': 5,
-          'issuesResolved': 2,
-        };
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
-        await prefs.setString('user', jsonEncode(_user));
-        notifyListeners();
-        return {'success': true};
+      // Format phone number
+      String formattedPhone = phone;
+      if (!phone.startsWith('+254')) {
+        formattedPhone = '+254$phone';
       }
 
-      // Real API login
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone': '+254$phone', 'password': password}),
+      final result = await SupabaseService.login(
+        phone: formattedPhone,
+        password: password,
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['success']) {
-        _token = data['token'];
-        _user = data['user'];
+      if (result['success'] == true) {
+        _user = result['user'];
+        _token = 'supabase_session_${DateTime.now().millisecondsSinceEpoch}';
+        
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
         await prefs.setString('user', jsonEncode(_user));
         notifyListeners();
         return {'success': true};
       } else {
-        return {'success': false, 'error': data['error'] ?? 'Login failed'};
+        return {'success': false, 'error': result['error'] ?? 'Login failed'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Network error: $e'};
+      return {'success': false, 'error': 'Network error. Please check your connection.'};
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<Map<String, dynamic>> register(String fullName, String phone, String idNumber, String password) async {
+  Future<Map<String, dynamic>> register(String fullName, String phone, String idNumber, String password, {String? village}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'fullName': fullName,
-          'phone': '+254$phone',
-          'idNumber': idNumber,
-          'password': password
-        }),
+      // Format phone number
+      String formattedPhone = phone;
+      if (!phone.startsWith('+254')) {
+        formattedPhone = '+254$phone';
+      }
+
+      final result = await SupabaseService.register(
+        fullName: fullName,
+        phone: formattedPhone,
+        idNumber: idNumber,
+        password: password,
+        village: village,
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['success']) {
-        _token = data['token'];
-        _user = data['user'];
+      if (result['success'] == true) {
+        _user = result['user'];
+        _token = 'supabase_session_${DateTime.now().millisecondsSinceEpoch}';
+        
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
         await prefs.setString('user', jsonEncode(_user));
         notifyListeners();
         return {'success': true};
       } else {
-        return {'success': false, 'error': data['error'] ?? 'Registration failed'};
+        return {'success': false, 'error': result['error'] ?? 'Registration failed'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Network error: $e'};
+      return {'success': false, 'error': 'Network error. Please check your connection.'};
     } finally {
       _isLoading = false;
       notifyListeners();

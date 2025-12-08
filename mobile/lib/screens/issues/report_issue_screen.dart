@@ -33,6 +33,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     'Healthcare Facilities', 
     'Security Concerns',
     'Broken Streetlights',
+    'Women Empowerment',
     'Other'
   ];
   

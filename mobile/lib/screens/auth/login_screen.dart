@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
+import '../../services/google_auth_service.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
   bool _rememberMe = false;
+  bool _isGoogleLoading = false;
 
   void _showTermsDialog() {
     showDialog(
@@ -71,6 +76,40 @@ class _LoginScreenState extends State<LoginScreen> {
     _showTermsDialog();
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+
+    final result = await GoogleAuthService.signInWithGoogle();
+
+    if (mounted) {
+      setState(() => _isGoogleLoading = false);
+
+      if (result['success'] == true) {
+        // Store user data in AuthService
+        final auth = context.read<AuthService>();
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', 'google_session_${DateTime.now().millisecondsSinceEpoch}');
+        await prefs.setString('user', jsonEncode(result['user']));
+        
+        // Notify auth service to reload
+        auth.notifyListeners();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['isNewUser'] == true 
+              ? 'Welcome, ${result['user']['fullName']}! 🎉' 
+              : 'Welcome back, ${result['user']['fullName']}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? 'Google sign-in failed'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   Future<void> _handleLogin() async {
     if (_phoneController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,28 +155,19 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo/Icon Section (like reference image)
+                  // Logo/Icon Section with white background
                   Container(
                     width: 100,
                     height: 100,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6366f1), Color(0xFF4c1d95)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF6366f1).withOpacity(0.4),
-                          blurRadius: 25,
-                          spreadRadius: 5,
-                        ),
-                      ],
+                      color: Colors.white,
                     ),
                     child: ClipOval(
                       child: Image.asset(
                         'assets/images/logo.png',
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.location_city, size: 50, color: Colors.white),
+                        errorBuilder: (_, __, ___) => const Icon(Icons.location_city, size: 50, color: Color(0xFF6366f1)),
                       ),
                     ),
                   ),
@@ -145,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   // App Name
                   const Text(
-                    'VOO Citizen',
+                    'VOO KYAMATU',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -266,8 +296,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Password reset coming soon'), backgroundColor: Color(0xFF6366f1)),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                 );
                               },
                               child: const Text('Forgot Password?', style: TextStyle(color: Color(0xFF6366f1), fontSize: 13)),
@@ -335,6 +366,46 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // OR Divider
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text('OR', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                            ),
+                            Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Google Sign-In Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                            icon: _isGoogleLoading
+                                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                                : Image.network(
+                                    'https://www.google.com/favicon.ico',
+                                    width: 24,
+                                    height: 24,
+                                    errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 28),
+                                  ),
+                            label: Text(
+                              _isGoogleLoading ? 'Signing in...' : 'Continue with Google',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
                           ),
                         ),
                       ],

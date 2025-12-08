@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -30,18 +31,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    // Demo mode bypass
-    final auth = context.read<AuthService>();
-    if (auth.user?['phone'] == '712345678') {
-      await Future.delayed(const Duration(milliseconds: 500)); // Fake network delay
+    // Check connectivity
+    final isOnline = await StorageService.isOnline();
+    
+    if (!isOnline) {
+      final cachedAnnouncements = StorageService.getCachedAnnouncements();
       if (mounted) {
         setState(() {
-          _announcements = [
-            {'title': 'MCA PA Announcement', 'content': 'Community meeting at Voo Market Hall on Friday 10am. All residents invited.'},
-            {'title': 'Bursary Allocations', 'content': 'First batch of bursary cheques will be distributed next week.'},
-          ];
+          _announcements = cachedAnnouncements;
           _isLoading = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You are offline. Showing cached data.'), backgroundColor: Colors.orange),
+        );
       }
       return;
     }
@@ -51,14 +53,22 @@ class _ServicesScreenState extends State<ServicesScreen> {
       final contactsRes = await http.get(Uri.parse('${AuthService.baseUrl}/emergency-contacts'));
 
       if (announcementsRes.statusCode == 200) {
-        _announcements = jsonDecode(announcementsRes.body)['announcements'] ?? [];
+        final data = jsonDecode(announcementsRes.body)['announcements'] ?? [];
+        _announcements = data;
+        StorageService.cacheAnnouncements(data);
       }
       if (contactsRes.statusCode == 200) {
         final contacts = jsonDecode(contactsRes.body)['contacts'] ?? [];
         if (contacts.isNotEmpty) _emergencyContacts = contacts;
       }
     } catch (e) {
-      // Use default contacts
+      // Fallback to cache if API fails
+      _announcements = StorageService.getCachedAnnouncements();
+      if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Connection failed. Showing cached data.'), backgroundColor: Colors.orange),
+        );
+      }
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -94,106 +104,131 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 color: const Color(0xFF6366f1),
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Services', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                      const SizedBox(height: 8),
-                      Text('Access government services', style: TextStyle(color: Colors.white.withOpacity(0.6))),
-                      const SizedBox(height: 24),
+                      // Header
+                      const Text('Services', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const SizedBox(height: 4),
+                      Text('Access government services & info', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                      const SizedBox(height: 16),
 
-                      // Quick Services Grid
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.3,
+                      // Quick Services - Horizontal Row (Compact)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildServiceCard(Icons.badge, 'Lost ID', Colors.red, () => _showLostIdForm(context)),
-                          _buildServiceCard(Icons.feedback, 'Feedback', Colors.blue, () => _showFeedbackForm(context)),
-                          _buildServiceCard(Icons.phone_in_talk, 'Emergency', Colors.orange, () => _showEmergencyContacts(context)),
-                          _buildServiceCard(Icons.info, 'About', Colors.purple, () => _showAbout(context)),
+                          _buildCompactServiceButton(Icons.badge, 'Lost ID', Colors.red, () => _showLostIdForm(context)),
+                          _buildCompactServiceButton(Icons.feedback, 'Feedback', Colors.blue, () => _showFeedbackForm(context)),
+                          _buildCompactServiceButton(Icons.phone_in_talk, 'Emergency', Colors.orange, () => _showEmergencyContacts(context)),
+                          _buildCompactServiceButton(Icons.info, 'About', Colors.purple, () => _showAbout(context)),
                         ],
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 20),
 
-                      // Emergency Contacts
-                      const Text('Emergency Contacts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                      const SizedBox(height: 12),
-                      ...(_emergencyContacts).take(4).map((c) => Card(
-                        color: const Color(0xFF1a1a3e),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.red.withOpacity(0.2),
-                            child: Icon(c['icon'] ?? Icons.phone, color: Colors.red),
+                      // Emergency Contacts - Compact Horizontal Scroll
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Emergency', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                          TextButton(
+                            onPressed: () => _showEmergencyContacts(context),
+                            child: const Text('See All', style: TextStyle(color: Color(0xFF6366f1), fontSize: 12)),
                           ),
-                          title: Text(c['name'] ?? '', style: const TextStyle(color: Colors.white)),
-                          subtitle: Text(c['phone'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.6))),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.call, color: Colors.green),
-                            onPressed: () => _showCallDialog(c['name'], c['phone']),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 70,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _emergencyContacts.length,
+                          itemBuilder: (context, index) {
+                            final c = _emergencyContacts[index];
+                            return Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1a1a3e),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(c['icon'] ?? Icons.phone, color: Colors.red, size: 20),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(c['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                                      Text(c['phone'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Announcements Section
+                      const Text('Announcements', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const SizedBox(height: 8),
+                      
+                      if (_announcements.isNotEmpty)
+                        ..._announcements.map((a) => Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2d1b69).withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF6366f1).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.campaign, color: Color(0xFF6366f1), size: 16),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(a['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(a['content'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, height: 1.4)),
+                              if (a['date'] != null) ...[
+                                const SizedBox(height: 6),
+                                Text(a['date'], style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+                              ],
+                            ],
+                          ),
+                        ))
+                      else
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2d1b69).withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline, color: Color(0xFF6366f1), size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text('No announcements yet. Pull to refresh.', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13)),
+                              ),
+                            ],
                           ),
                         ),
-                      )),
-                      const SizedBox(height: 24),
-
-                      // Announcements
-                      if (_announcements.isNotEmpty) ...[
-                        const Text('Announcements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                        const SizedBox(height: 12),
-                        ..._announcements.map((a) => Card(
-                          color: const Color(0xFF2d1b69).withOpacity(0.5),
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.campaign, color: Color(0xFF6366f1), size: 20),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(a['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(a['content'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                        )),
-                      ] else ...[
-                        // Show sample announcement
-                        Card(
-                          color: const Color(0xFF2d1b69).withOpacity(0.5),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(Icons.campaign, color: Color(0xFF6366f1), size: 20),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text('Welcome to VOO Citizen!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text('Report community issues, apply for bursaries, and access government services all in one app.', 
-                                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -202,23 +237,23 @@ class _ServicesScreenState extends State<ServicesScreen> {
     );
   }
 
-  Widget _buildServiceCard(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _buildCompactServiceButton(IconData icon, String label, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 36),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-          ],
-        ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withOpacity(0.3)),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }

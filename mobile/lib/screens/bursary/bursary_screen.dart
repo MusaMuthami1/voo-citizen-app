@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/supabase_service.dart';
 
 class BursaryScreen extends StatefulWidget {
   const BursaryScreen({super.key});
@@ -104,68 +105,29 @@ class _BursaryScreenState extends State<BursaryScreen> {
   Future<void> _loadApplications() async {
     final auth = context.read<AuthService>();
     
-    // Demo mode bypass
-    if (auth.user?['phone'] == '712345678') {
-      setState(() {
-         _applications = [
-             {
-               'institutionName': 'Kenyatta University',
-               'course': 'Computer Science', 
-               'yearOfStudy': '2',
-               'status': 'approved',
-               'amountApproved': 15000,
-               'date': '2023-05-10'
-             },
-             {
-               'institutionName': 'Nairobi Technical',
-               'course': 'Plumbing',
-               'yearOfStudy': '1', 
-               'status': 'pending',
-               'amountApproved': 0,
-               'date': '2023-11-20'
-             }
-          ];
-          _isLoading = false;
-      });
+    // Get user ID
+    final userId = auth.user?['id']?.toString();
+    if (userId == null || userId.isEmpty) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
       return;
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/bursary/my'),
-        headers: {'Authorization': 'Bearer ${auth.token}'},
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final loadedApps = await SupabaseService.getMyBursaryApplications(userId);
+      if (mounted) {
         setState(() {
-          _applications = data['applications'] ?? [];
+          _applications = loadedApps;
           _isLoading = false;
         });
       }
     } catch (e) {
-      // Mock data for demo
       if (mounted) {
-        setState(() {
-          _applications = [
-             {
-               'institutionName': 'Kenyatta University',
-               'course': 'Computer Science', 
-               'yearOfStudy': '2',
-               'status': 'approved',
-               'amountApproved': 15000,
-               'date': '2023-05-10'
-             },
-             {
-               'institutionName': 'Nairobi Technical',
-               'course': 'Plumbing',
-               'yearOfStudy': '1', 
-               'status': 'pending',
-               'amountApproved': 0,
-               'date': '2023-11-20'
-             }
-          ];
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load applications. Check your connection.'), backgroundColor: Colors.red),
+        );
       }
     }
   }
@@ -434,7 +396,6 @@ class _BursaryScreenState extends State<BursaryScreen> {
               _institutionController.text = selection;
             },
             fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-              // Sync with main controller if user types manually
               textEditingController.addListener(() {
                  _institutionController.text = textEditingController.text;
               });
@@ -474,40 +435,54 @@ class _BursaryScreenState extends State<BursaryScreen> {
           ),
           const SizedBox(height: 12),
 
-          DropdownButtonFormField<String>(
-            value: _institutionType,
-            dropdownColor: const Color(0xFF1a1a3e),
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Institution Type', Icons.category),
-            items: const [
-              DropdownMenuItem(value: 'university', child: Text('University')),
-              DropdownMenuItem(value: 'college', child: Text('College')),
-              DropdownMenuItem(value: 'polytechnic', child: Text('Polytechnic')),
-              DropdownMenuItem(value: 'secondary', child: Text('Secondary School')),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _institutionType,
+                  dropdownColor: const Color(0xFF1a1a3e),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Type', Icons.category),
+                  items: const [
+                    DropdownMenuItem(value: 'university', child: Text('University')),
+                    DropdownMenuItem(value: 'college', child: Text('College')),
+                    DropdownMenuItem(value: 'polytechnic', child: Text('Polytechnic')),
+                    DropdownMenuItem(value: 'secondary', child: Text('Secondary')),
+                  ],
+                  onChanged: (v) => setState(() => _institutionType = v!),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _admissionController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Adm No', Icons.numbers),
+                ),
+              ),
             ],
-            onChanged: (v) => setState(() => _institutionType = v!),
           ),
           const SizedBox(height: 12),
 
-          TextField(
-            controller: _admissionController,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Admission Number', Icons.numbers),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _courseController,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Course/Program *', Icons.book),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _yearController,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Year of Study', Icons.calendar_today),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _courseController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Course *', Icons.book),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _yearController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Year', Icons.calendar_today),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
 
@@ -515,11 +490,17 @@ class _BursaryScreenState extends State<BursaryScreen> {
           const Text('Financial Details', style: TextStyle(color: Color(0xFF6366f1), fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
-          TextField(
-            controller: _annualFeesController,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Annual Fees (KES)', Icons.payments),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _annualFeesController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Annual Fees', Icons.payments),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           
@@ -563,18 +544,25 @@ class _BursaryScreenState extends State<BursaryScreen> {
           const Text('Guardian Details', style: TextStyle(color: Color(0xFF6366f1), fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
-          TextField(
-            controller: _guardianNameController,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Guardian Name', Icons.person),
-          ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _guardianPhoneController,
-            keyboardType: TextInputType.phone,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputDecoration('Guardian Phone', Icons.phone),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _guardianNameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Name', Icons.person),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _guardianPhoneController,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('Phone', Icons.phone),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
 

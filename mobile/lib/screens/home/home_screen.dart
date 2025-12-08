@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
+import '../../providers/theme_provider.dart';
 import '../services/services_screen.dart';
 import '../bursary/bursary_screen.dart';
 import '../issues/report_issue_screen.dart';
@@ -57,8 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeTab(Map<String, dynamic>? user, double screenWidth) {
-    final crossAxisCount = screenWidth > 400 ? 4 : 3;
-    
+    // Poll for announcements
+    final announcements = StorageService.getCachedAnnouncements();
+    final recentAnnouncement = announcements.isNotEmpty ? announcements.first : null;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -86,39 +90,101 @@ class _HomeScreenState extends State<HomeScreen> {
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 0.9,
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.85,
                 children: [
-                  _buildQuickAction(Icons.school, 'Bursary', Colors.purple, screenWidth, isBursary: true),
-                  _buildQuickAction(Icons.add_road, 'Roads', Colors.orange, screenWidth, category: 'Damaged Roads', autoPick: true),
-                  _buildQuickAction(Icons.water_drop, 'Water', Colors.blue, screenWidth, category: 'Water/Sanitation', autoPick: true),
-                  _buildQuickAction(Icons.more_horiz, 'Other', Colors.grey, screenWidth, category: 'Other', autoPick: false),
+                   _buildQuickAction(Icons.school, 'Bursary', Colors.purple, screenWidth, isBursary: true),
+                  _buildQuickAction(Icons.add_road, 'Roads', Colors.orange, screenWidth, category: 'Damaged Roads'),
+                  _buildQuickAction(Icons.water_drop, 'Water', Colors.blue, screenWidth, category: 'Water/Sanitation'),
+                  _buildQuickAction(Icons.menu_book, 'Education', Colors.teal, screenWidth, category: 'School Infrastructure'),
+                  _buildQuickAction(Icons.woman, 'Women', Colors.pink, screenWidth, category: 'Women Empowerment'),
+                  _buildQuickAction(Icons.more_horiz, 'Other', Colors.grey, screenWidth, category: 'Other'),
                 ],
               ),
 
               const SizedBox(height: 28),
               
-              Text('Recent Activity', style: TextStyle(fontSize: screenWidth * 0.045, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Recent Announcements', style: TextStyle(fontSize: screenWidth * 0.045, fontWeight: FontWeight.bold, color: Colors.white)),
+                  TextButton(
+                    onPressed: () => setState(() => _currentIndex = 3), // Switch to Services tab
+                    child: const Text('View All', style: TextStyle(color: Color(0xFF6366f1))),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
               
-              Card(
-                color: const Color(0xFF1a1a3e),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(Icons.inbox, size: 48, color: Colors.white.withOpacity(0.3)),
-                      const SizedBox(height: 12),
-                      Text('No recent issues', style: TextStyle(color: Colors.white.withOpacity(0.5))),
-                      const SizedBox(height: 8),
-                      Text('Tap "Report Issue" to get started', 
-                          style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 12)),
-                    ],
+              if (recentAnnouncement != null)
+                Card(
+                  color: const Color(0xFF1a1a3e),
+                  child: InkWell(
+                    onTap: () => setState(() => _currentIndex = 3),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF6366f1).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.campaign, color: Color(0xFF6366f1)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(recentAnnouncement['title'] ?? 'New Announcement', 
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(recentAnnouncement['date'] ?? '', 
+                                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white38),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            recentAnnouncement['content'] ?? '',
+                            style: TextStyle(color: Colors.white.withOpacity(0.8), height: 1.4),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Card(
+                  color: const Color(0xFF1a1a3e),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.notifications_off_outlined, color: Colors.white.withOpacity(0.5)),
+                        const SizedBox(width: 12),
+                        Text('No new announcements', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -179,73 +245,121 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildProfileTab(AuthService auth, Map<String, dynamic>? user) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF0f0f23), Color(0xFF1a1a3e)]),
-      ),
+      color: const Color(0xFF0f0f23), // Dark background
       child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(colors: [Color(0xFF6366f1), Color(0xFF4c1d95)]),
-                ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: const Color(0xFF1a1a3e),
-                  child: Text(
-                    (user?['fullName'] ?? 'U').split(' ').take(2).map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').join(),
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(user?['fullName'] ?? 'User', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 4),
-              Text(user?['phone'] ?? '', style: TextStyle(color: Colors.white.withOpacity(0.7))),
-              const SizedBox(height: 32),
-              
-              _buildProfileOption(Icons.person_outline, 'Edit Profile', () => _showEditProfile(context)),
-              _buildProfileOption(Icons.notifications_outlined, 'Notifications', () => _showNotifications(context)),
-              
-             const SizedBox(height: 24),
-              const Text('Security & Compliance', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 8),
-              _buildProfileOption(Icons.security, 'Data Security', () => _showSecurityStatus(context)),
-              _buildProfileOption(Icons.shield, 'Privacy Policy', () => _showPrivacy(context)),
-              _buildProfileOption(Icons.info_outline, 'About & Copyright', () => _showAbout(context)),
-              
-              const SizedBox(height: 24),
-              
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => auth.logout(),
-                  icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text('Logout', style: TextStyle(color: Colors.red)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Column(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
                 children: [
-                   Icon(Icons.lock, size: 16, color: Colors.white.withOpacity(0.3)),
-                   const SizedBox(height: 4),
-                   Text('Secured by VooKyamatu Shield\n© 2024 Voo Kyamatu. All Rights Reserved.', 
-                     textAlign: TextAlign.center,
-                     style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10)),
+                  // const Icon(Icons.arrow_back, color: Colors.white), // No back button on main tab
+                  // const SizedBox(width: 16),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'Settings',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  // SizedBox(width: 40), // Balance center
                 ],
-              )
-            ],
-          ),
+              ),
+            ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // Search Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1a1a3e),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const TextField(
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          icon: Icon(Icons.search, color: Colors.white54),
+                          hintText: 'Search for a setting...',
+                          hintStyle: TextStyle(color: Colors.white38),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Menu Items
+                    _buildSettingsItem(Icons.person_outline, 'Account', () => _showEditProfile(context)),
+                    _buildSettingsItem(Icons.notifications_outlined, 'Notifications', () => _showNotifications(context)),
+                    _buildAppearanceItem(context),
+                    _buildSettingsItem(Icons.lock_outline, 'Privacy & Security', () => _showPrivacy(context)),
+                    _buildSettingsItem(Icons.headset_mic_outlined, 'Help and Support', () => _showHelp(context)),
+                    _buildSettingsItem(Icons.help_outline, 'About', () => _showAbout(context)),
+                    
+                    const SizedBox(height: 32),
+                     SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => auth.logout(),
+                        child: const Text('Log Out', style: TextStyle(color: Colors.red, fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsItem(IconData icon, String title, VoidCallback onTap) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2), // Divider effect if needed, or distinct items
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.white10)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        leading: Icon(icon, color: Colors.white, size: 28),
+        title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildAppearanceItem(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.white10)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        leading: Icon(
+          themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+          color: Colors.white,
+          size: 28,
+        ),
+        title: const Text('Appearance', style: TextStyle(color: Colors.white, fontSize: 16)),
+        subtitle: Text(
+          themeProvider.isDarkMode ? 'Dark Mode' : 'Light Mode',
+          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+        ),
+        trailing: Switch(
+          value: themeProvider.isDarkMode,
+          onChanged: (_) => themeProvider.toggleTheme(),
+          activeColor: const Color(0xFF6366f1),
         ),
       ),
     );
@@ -401,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             const Text('Copyright & Security', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('© 2024 Voo Kyamatu Ward. All Rights Reserved.\n\nThis application is protected against unauthorized access and malware. Unconfigured data sets are automatically flagged.', 
+            Text('© 2025 Voo Kyamatu Ward. All Rights Reserved.\n\nThis application is protected with industry-standard security measures to safeguard your data.', 
               style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
           ],
         ),
