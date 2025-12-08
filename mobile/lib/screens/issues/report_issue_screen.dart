@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../../services/auth_service.dart';
-import '../../services/supabase_service.dart';
+import '../../services/dashboard_service.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   final String? initialCategory;
@@ -140,18 +140,17 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         base64Images.add(base64Encode(bytes));
       }
 
-      final result = await SupabaseService.createIssue(
+      // Submit to Dashboard API (stores in MongoDB for CRMS monitoring)
+      final result = await DashboardService.submitMobileIssue(
+        phoneNumber: auth.user!['phone'] ?? 'N/A',
         userId: auth.user!['id'],
-        userPhone: auth.user!['phone'] ?? 'N/A', // Handle missing phone for Google users
         title: _titleController.text,
         description: _descriptionController.text,
         category: _selectedCategory == 'Other' ? _specifyIssueController.text : _selectedCategory,
         images: base64Images,
-        location: {
-          'address': _locationController.text,
-          'lat': _position?.latitude,
-          'lng': _position?.longitude,
-        },
+        location: _locationController.text.isNotEmpty 
+          ? _locationController.text 
+          : (_position != null ? '${_position!.latitude}, ${_position!.longitude}' : null),
       );
 
       if (result['success'] == true) {

@@ -107,7 +107,45 @@ class DashboardService {
     }
   }
 
-  /// Submit new issue
+  /// Submit new issue with images via mobile endpoint (PUBLIC - no auth required)
+  /// Uses /api/citizen/mobile/issues endpoint which accepts base64 images
+  static Future<Map<String, dynamic>> submitMobileIssue({
+    required String phoneNumber,
+    required String title,
+    required String category,
+    required String description,
+    String? location,
+    List<String>? images, // base64 encoded images
+    String? userId,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiBase/mobile/issues'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'phoneNumber': phoneNumber,
+          'title': title,
+          'category': category,
+          'description': description,
+          'location': location,
+          'images': images ?? [],
+          'userId': userId,
+        }),
+      );
+      
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 201) {
+        return {'success': true, ...data};
+      } else {
+        return {'success': false, 'error': data['error'] ?? 'Submit failed'};
+      }
+    } catch (e) {
+      print('Submit mobile issue error: $e');
+      return {'success': false, 'error': 'Submit failed: $e'};
+    }
+  }
+
+  /// Legacy submitIssue (requires citizen portal auth)
   static Future<Map<String, dynamic>> submitIssue({
     required String title,
     required String category,
@@ -131,6 +169,7 @@ class DashboardService {
       return {'success': false, 'error': 'Submit failed: $e'};
     }
   }
+
 
   // ============ BURSARY ============
   
