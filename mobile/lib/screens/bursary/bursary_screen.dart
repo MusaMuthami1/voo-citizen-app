@@ -121,11 +121,15 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
         institutionType: _institutionType,
         reason: verboseReason,
         amountRequested: double.tryParse(_annualFeesController.text.replaceAll(',', '')),
+        phoneNumber: auth.user?['phone'],
+        userId: auth.user?['id']?.toString(),
+        fullName: auth.user?['fullName'],
       );
       
+      // Fallback to Supabase if dashboard fails
       if (result['success'] != true && auth.user != null) {
         result = await SupabaseService.applyForBursary(
-          userId: auth.user!['id'],
+          userId: auth.user!['id'].toString(),
           institutionName: _institutionController.text,
           institutionType: _institutionType,
           course: _courseController.text,
@@ -435,11 +439,33 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
   }
 
   Widget _buildInstitutionStep() {
+    // Track selected institution separately for dropdown
+    final bool isOtherSelected = _institutionController.text == 'Other' || 
+        (_institutionController.text.isNotEmpty && !_institutions.contains(_institutionController.text));
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel('Institution'),
-        _buildDropdownField(_institutions, _institutionController.text.isEmpty ? null : _institutionController.text, (v) => _institutionController.text = v ?? ''),
+        _buildDropdownField(
+          _institutions, 
+          isOtherSelected ? 'Other' : (_institutionController.text.isEmpty ? null : _institutionController.text), 
+          (v) {
+            if (v == 'Other') {
+              setState(() => _institutionController.text = 'Other');
+            } else {
+              setState(() => _institutionController.text = v ?? '');
+            }
+          }
+        ),
+        if (isOtherSelected) ...[
+          const SizedBox(height: 12),
+          _buildTextField(
+            _institutionController, 
+            'Enter your institution name', 
+            Icons.edit_outlined
+          ),
+        ],
         const SizedBox(height: 16),
         _buildLabel('Type'),
         _buildTypeSelector(),

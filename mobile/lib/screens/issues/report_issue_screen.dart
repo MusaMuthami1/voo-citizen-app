@@ -177,6 +177,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         images: base64Images,
         phoneNumber: user?['phone'] ?? '',
         userId: userId,
+        fullName: user?['fullName'] ?? user?['email']?.split('@')[0],
       );
 
       if (mounted) {

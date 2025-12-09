@@ -353,4 +353,22 @@ class SupabaseService {
       return {'success': false, 'error': 'Update failed: $e'};
     }
   }
+
+  static Future<Map<String, dynamic>> deleteUser(String userId) async {
+    try {
+      final url = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
+      final res = await http.delete(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': 'Failed to delete account'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Delete failed: $e'};
+    }
+  }
 }

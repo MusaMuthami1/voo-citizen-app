@@ -117,6 +117,7 @@ class DashboardService {
     String? location,
     List<String>? images, // base64 encoded images
     String? userId,
+    String? fullName,
   }) async {
     try {
       final res = await http.post(
@@ -130,6 +131,7 @@ class DashboardService {
           'location': location,
           'images': images ?? [],
           'userId': userId,
+          'fullName': fullName,
         }),
       );
       
@@ -194,7 +196,8 @@ class DashboardService {
     }
   }
 
-  /// Submit bursary application
+  /// Submit bursary application via mobile endpoint (PUBLIC - no auth required)
+  /// Uses /api/citizen/mobile/bursaries endpoint which stores directly to MongoDB
   static Future<Map<String, dynamic>> applyForBursary({
     required String institutionName,
     required String course,
@@ -202,11 +205,14 @@ class DashboardService {
     String? institutionType,
     String? reason,
     double? amountRequested,
+    String? phoneNumber,
+    String? userId,
+    String? fullName,
   }) async {
     try {
       final res = await http.post(
-        Uri.parse('$apiBase/bursaries'),
-        headers: _headers,
+        Uri.parse('$apiBase/mobile/bursaries'),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'institutionName': institutionName,
           'course': course,
@@ -214,11 +220,20 @@ class DashboardService {
           'institutionType': institutionType,
           'reason': reason,
           'amountRequested': amountRequested,
+          'phoneNumber': phoneNumber,
+          'userId': userId,
+          'fullName': fullName,
         }),
       );
       
-      return jsonDecode(res.body);
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 201) {
+        return {'success': true, ...data};
+      } else {
+        return {'success': false, 'error': data['error'] ?? 'Application failed'};
+      }
     } catch (e) {
+      print('Apply bursary error: $e');
       return {'success': false, 'error': 'Application failed: $e'};
     }
   }

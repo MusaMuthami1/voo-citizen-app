@@ -55,6 +55,28 @@ class AuthService extends ChangeNotifier {
     await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
   }
 
+  /// Set user state from Google sign-in
+  Future<void> setGoogleUser(Map<String, dynamic> userData) async {
+    _token = 'google_session_${DateTime.now().millisecondsSinceEpoch}';
+    _user = userData;
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', _token!);
+    await prefs.setString('user', jsonEncode(_user));
+    await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
+    
+    notifyListeners();
+  }
+
+  /// Reload user data from SharedPreferences (useful after external login)
+  Future<void> reloadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('token');
+    final userData = prefs.getString('user');
+    if (userData != null) _user = jsonDecode(userData);
+    notifyListeners();
+  }
+
   Future<Map<String, dynamic>> login(String phone, String password) async {
     _isLoading = true;
     notifyListeners();
@@ -197,5 +219,32 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> deleteAccount() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      if (_user == null) {
+        return {'success': false, 'error': 'No user logged in'};
+      }
+
+      final userId = _user!['id'].toString();
+      final result = await SupabaseService.deleteUser(userId);
+
+      if (result['success'] == true) {
+        // Clear local data
+        await logout();
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': result['error'] ?? 'Failed to delete account'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Delete failed: $e'};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

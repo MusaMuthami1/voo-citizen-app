@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final announcements = StorageService.getCachedAnnouncements();
     final recentAnnouncement = announcements.isNotEmpty ? announcements.first : null;
     final size = MediaQuery.of(context).size;
-    final firstName = user?['fullName']?.split(' ')[0] ?? 'Citizen';
+    final firstName = user?['fullName']?.split(' ')[0] ?? user?['email']?.split('@')[0] ?? 'User';
 
     return Stack(
       children: [
@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             tween: Tween(begin: 0, end: 1),
             duration: const Duration(milliseconds: 1000),
             builder: (context, value, child) => Opacity(
-              opacity: value,
+              opacity: value.clamp(0.0, 1.0),
               child: Transform.scale(scale: value, child: _buildCircle(160, primaryPink.withOpacity(0.4))),
             ),
           ),
@@ -160,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             tween: Tween(begin: 0, end: 1),
             duration: const Duration(milliseconds: 1200),
             builder: (context, value, child) => Opacity(
-              opacity: value,
+              opacity: value.clamp(0.0, 1.0),
               child: Transform.scale(scale: value, child: _buildCircle(120, lightPink.withOpacity(0.5))),
             ),
           ),
@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             duration: const Duration(milliseconds: 800),
                             builder: (context, value, child) => Transform.rotate(
                               angle: (1 - value) * 0.5,
-                              child: Opacity(opacity: value, child: Icon(_getGreetingIcon(), color: Colors.white, size: 28)),
+                              child: Opacity(opacity: value.clamp(0.0, 1.0), child: Icon(_getGreetingIcon(), color: Colors.white, size: 28)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -264,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     duration: const Duration(milliseconds: 800),
                     curve: Curves.easeOut,
                     builder: (context, value, child) => Opacity(
-                      opacity: value,
+                      opacity: value.clamp(0.0, 1.0),
                       child: Transform.translate(
                         offset: Offset(0, 20 * (1 - value)),
                         child: Container(
@@ -375,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       builder: (context, value, child) => Transform.scale(
         scale: value,
         child: Opacity(
-          opacity: value,
+          opacity: value.clamp(0.0, 1.0),  // Clamp to avoid assertion error with easeOutBack
           child: GestureDetector(
             onTap: () {
               if (isBursary) {
@@ -444,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           builder: (context, value, child) => Transform.translate(
                             offset: Offset(0, 20 * (1 - value)),
                             child: Opacity(
-                              opacity: value,
+                              opacity: value.clamp(0.0, 1.0),
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(16)),
@@ -465,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(user?['fullName'] ?? 'Citizen', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: textDark)),
+                                          Text(user?['fullName'] ?? user?['email']?.split('@')[0] ?? 'User', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: textDark)),
                                           Text(user?['phone'] ?? '', style: const TextStyle(color: textMuted, fontSize: 13)),
                                         ],
                                       ),
@@ -491,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           tween: Tween(begin: 0, end: 1),
                           duration: const Duration(milliseconds: 800),
                           builder: (context, value, child) => Opacity(
-                            opacity: value,
+                            opacity: value.clamp(0.0, 1.0),
                             child: SizedBox(
                               width: double.infinity,
                               child: OutlinedButton(
@@ -512,6 +512,44 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
+                        
+                        const SizedBox(height: 32),
+                        // Danger Zone
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFFECACA)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Danger Zone', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold, fontSize: 14)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: () => _showDeleteAccountDialog(context, auth),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFFEF4444),
+                                    side: const BorderSide(color: Color(0xFFEF4444)),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  child: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.w600)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 100), // Bottom padding for comfortable scrolling
                       ],
                     ),
                   ),
@@ -531,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       builder: (context, value, child) => Transform.translate(
         offset: Offset(20 * (1 - value), 0),
         child: Opacity(
-          opacity: value,
+          opacity: value.clamp(0.0, 1.0),
           child: Container(
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
@@ -560,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       builder: (context, value, child) => Transform.translate(
         offset: Offset(20 * (1 - value), 0),
         child: Opacity(
-          opacity: value,
+          opacity: value.clamp(0.0, 1.0),
           child: Container(
             margin: const EdgeInsets.only(bottom: 4),
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
@@ -691,6 +729,87 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: const Text('Got it', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, AuthService auth) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 28),
+                SizedBox(width: 12),
+                Text('Delete Account', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Are you sure you want to delete your account? This action cannot be undone.',
+              style: TextStyle(color: textMuted, fontSize: 15, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '• All your reported issues will be kept for record\n• Your bursary applications will remain in the system\n• You will need to register again to use the app',
+              style: TextStyle(color: textMuted, fontSize: 13, height: 1.6),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      // Delete account
+                      final result = await auth.deleteAccount();
+                      if (mounted) {
+                        if (result['success'] == true) {
+                          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Account deleted successfully'), backgroundColor: Color(0xFF10B981)),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(result['error'] ?? 'Failed to delete account'), backgroundColor: const Color(0xFFEF4444)),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEF4444),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

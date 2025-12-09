@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
-import 'dart:math';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../services/google_auth_service.dart';
 import 'forgot_password_screen.dart';
@@ -98,10 +95,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() => _isGoogleLoading = false);
       if (result['success'] == true) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', 'google_session_${DateTime.now().millisecondsSinceEpoch}');
-        await prefs.setString('user', jsonEncode(result['user']));
-        await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
+        // Use AuthService to properly set Google user state
+        final auth = context.read<AuthService>();
+        await auth.setGoogleUser(result['user']);
+        
         _showSuccess('Welcome, ${result['user']['fullName']}!');
         if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
       } else {
