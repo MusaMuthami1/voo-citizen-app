@@ -7,10 +7,10 @@ class ThemeProvider extends ChangeNotifier {
   bool _isDarkMode = false; // Default to light coral theme
 
   // Coral Pink Theme Colors
-  static const Color primaryPink = Color(0xFFE8847C);
+  static const Color primaryOrange = Color(0xFFE8847C);
   static const Color lightPink = Color(0xFFF5ADA7);
   static const Color darkPink = Color(0xFFD4635B);
-  static const Color bgPink = Color(0xFFF9C5C1);
+  static const Color bgDark = Color(0xFFF9C5C1);
   static const Color textDark = Color(0xFF333333);
   static const Color textMuted = Color(0xFF666666);
   static const Color cardBg = Color(0xFFF8F8F8);
@@ -43,18 +43,18 @@ class ThemeProvider extends ChangeNotifier {
     useMaterial3: true,
     brightness: Brightness.light,
     textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
-    primaryColor: primaryPink,
+    primaryColor: primaryOrange,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryPink,
+      seedColor: primaryOrange,
       brightness: Brightness.light,
-      primary: primaryPink,
+      primary: primaryOrange,
       secondary: lightPink,
       surface: Colors.white,
-      background: bgPink,
+      background: bgDark,
     ),
-    scaffoldBackgroundColor: bgPink,
+    scaffoldBackgroundColor: bgDark,
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryPink,
+      backgroundColor: primaryOrange,
       foregroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
@@ -72,13 +72,13 @@ class ThemeProvider extends ChangeNotifier {
       fillColor: cardBg,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: primaryPink, width: 1.5)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: primaryOrange, width: 1.5)),
       hintStyle: TextStyle(color: Colors.grey.shade400),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryPink,
+        backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -95,44 +95,44 @@ class ThemeProvider extends ChangeNotifier {
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: primaryPink,
+      backgroundColor: primaryOrange,
       foregroundColor: Colors.white,
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: Colors.white,
-      indicatorColor: primaryPink.withOpacity(0.2),
+      indicatorColor: primaryOrange.withOpacity(0.2),
       iconTheme: MaterialStateProperty.resolveWith((states) {
         if (states.contains(MaterialState.selected)) {
-          return const IconThemeData(color: primaryPink);
+          return const IconThemeData(color: primaryOrange);
         }
         return IconThemeData(color: Colors.grey.shade500);
       }),
       labelTextStyle: MaterialStateProperty.resolveWith((states) {
         if (states.contains(MaterialState.selected)) {
-          return const TextStyle(color: primaryPink, fontWeight: FontWeight.w600, fontSize: 12);
+          return const TextStyle(color: primaryOrange, fontWeight: FontWeight.w600, fontSize: 12);
         }
         return TextStyle(color: Colors.grey.shade500, fontSize: 12);
       }),
     ),
     checkboxTheme: CheckboxThemeData(
       fillColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) return primaryPink;
+        if (states.contains(MaterialState.selected)) return primaryOrange;
         return Colors.transparent;
       }),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) return primaryPink;
+        if (states.contains(MaterialState.selected)) return primaryOrange;
         return Colors.grey;
       }),
       trackColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) return primaryPink.withOpacity(0.3);
+        if (states.contains(MaterialState.selected)) return primaryOrange.withOpacity(0.3);
         return Colors.grey.shade300;
       }),
     ),
     dividerColor: Colors.grey.shade200,
-    iconTheme: const IconThemeData(color: primaryPink),
+    iconTheme: const IconThemeData(color: primaryOrange),
   );
 
   // Dark Theme - Coral tones
@@ -140,11 +140,11 @@ class ThemeProvider extends ChangeNotifier {
     useMaterial3: true,
     brightness: Brightness.dark,
     textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-    primaryColor: primaryPink,
+    primaryColor: primaryOrange,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryPink,
+      seedColor: primaryOrange,
       brightness: Brightness.dark,
-      primary: primaryPink,
+      primary: primaryOrange,
       secondary: lightPink,
     ),
     scaffoldBackgroundColor: const Color(0xFF1A1A2E),
@@ -168,7 +168,7 @@ class ThemeProvider extends ChangeNotifier {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryPink,
+        backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -176,10 +176,10 @@ class ThemeProvider extends ChangeNotifier {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: const Color(0xFF252542),
-      indicatorColor: primaryPink.withOpacity(0.3),
+      indicatorColor: primaryOrange.withOpacity(0.3),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: primaryPink,
+      backgroundColor: primaryOrange,
       foregroundColor: Colors.white,
     ),
   );

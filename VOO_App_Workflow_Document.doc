@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Word.Document"?>
+<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:sl="http://schemas.microsoft.com/schemaLibrary/2003/core" xmlns:aml="http://schemas.microsoft.com/aml/2001/core" xmlns:wx="http://schemas.microsoft.com/office/word/2003/auxHint" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:dt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" w:macrosPresent="no" w:embeddedObjPresent="no" w:ocxPresent="no" xml:space="preserve">
+<w:body>
+
+<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>📱 VOO Citizen App - Complete Workflow Document</w:t></w:r></w:p>
+<w:p><w:r><w:t>Version: 1.0 | Date: December 9, 2024</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🔐 Screen 1: Login Screen</w:t></w:r></w:p>
+<w:p><w:r><w:t>Features:</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Username field: Phone number or username</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Password field: User's chosen password</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Login button: Orange gradient</w:t></w:r></w:p>
+<w:p><w:r><w:t>• "Create Account" link: Navigates to registration</w:t></w:r></w:p>
+<w:p><w:r><w:t>User Flow: Enter username → Enter password → Tap Login → Home Screen</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>📝 Screen 2: Registration Step 1 - User Details</w:t></w:r></w:p>
+<w:p><w:r><w:t>Fields:</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Full Name: User's full name</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Phone Number: +254 format</w:t></w:r></w:p>
+<w:p><w:r><w:t>• ID Number: National ID</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Village: Dropdown selection</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:b/><w:color w:val="FF8C00"/></w:rPr><w:t>⚠️ IMPORTANT: Phone number can only be used ONCE for registration. After successful registration, it cannot register again.</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>📱 Screen 3: Registration Step 2 - OTP Verification</w:t></w:r></w:p>
+<w:p><w:r><w:t>Features:</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 6 separate OTP input boxes</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Auto-submit when all digits entered</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Resend option after 60 seconds</w:t></w:r></w:p>
+<w:p><w:r><w:t>• OTP expires in 10 minutes</w:t></w:r></w:p>
+<w:p><w:r><w:t>Security: 3 attempts maximum, SMS sent via Infobip</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🔒 Screen 4: Registration Step 3 - Create Password</w:t></w:r></w:p>
+<w:p><w:r><w:t>Password Requirements:</w:t></w:r></w:p>
+<w:p><w:r><w:t>✅ Minimum 8 characters</w:t></w:r></w:p>
+<w:p><w:r><w:t>✅ At least one letter</w:t></w:r></w:p>
+<w:p><w:r><w:t>✅ At least one number</w:t></w:r></w:p>
+<w:p><w:r><w:t>✅ At least one special character (!@#$%^*)</w:t></w:r></w:p>
+<w:p><w:r><w:t>After Success: Redirect to Login with username pre-filled</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🏠 Screen 5: Home Screen</w:t></w:r></w:p>
+<w:p><w:r><w:t>Sections:</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Header: "Good Morning/Afternoon, [Name]"</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Announcements: From MCA admin dashboard</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Quick Actions: Report Issue, My Issues, Bursary, Emergency, Services, Profile</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>📢 Announcements: Created by admin in dashboard → appear here immediately + push notification sent</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🚨 Screen 6: Report Issue</w:t></w:r></w:p>
+<w:p><w:r><w:t>Fields: Title, Category, Description, Location (GPS), Photos (up to 3)</w:t></w:r></w:p>
+<w:p><w:r><w:t>Features: AI-enhanced descriptions, Image upload to Cloudinary, Unique issue number (ISS-XXXXXX)</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>📋 Screen 7: My Issues</w:t></w:r></w:p>
+<w:p><w:r><w:t>Issue Status Badges:</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 🟡 Pending (Yellow) - Awaiting review</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 🔵 In Progress (Blue) - Being worked on</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 🟢 Resolved (Green) - Completed</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Dashboard Sync: When admin resolves issue → Status changes to green → Push notification sent</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🎓 Screen 8: Bursary Application</w:t></w:r></w:p>
+<w:p><w:r><w:t>Application Fields: Institution Name, Institution Type, Course, Year of Study, Amount Requested, Reason</w:t></w:r></w:p>
+<w:p><w:r><w:t>Application Status:</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 🟡 Pending - Awaiting admin review</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 🟢 Approved - Shows approved amount</w:t></w:r></w:p>
+<w:p><w:r><w:t>• 🔴 Rejected - Shows rejection reason</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>👤 Screen 9: Profile</w:t></w:r></w:p>
+<w:p><w:r><w:t>Information: Profile Picture, Full Name, Phone Number, Village, Issues Reported count, Issues Resolved count</w:t></w:r></w:p>
+<w:p><w:r><w:t>Actions: Edit Profile, Change Password, Logout, Delete Account (Danger Zone)</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🖥️ Admin Dashboard → App Sync</w:t></w:r></w:p>
+<w:p><w:r><w:t>| Admin Action | Effect in App | Notification |</w:t></w:r></w:p>
+<w:p><w:r><w:t>| Create Announcement | Appears in Home carousel | Push notification |</w:t></w:r></w:p>
+<w:p><w:r><w:t>| Approve Bursary | Status → Approved with amount | SMS to applicant |</w:t></w:r></w:p>
+<w:p><w:r><w:t>| Reject Bursary | Status → Rejected with reason | SMS to applicant |</w:t></w:r></w:p>
+<w:p><w:r><w:t>| Mark Issue In Progress | Badge changes to blue | Push notification |</w:t></w:r></w:p>
+<w:p><w:r><w:t>| Resolve Issue | Badge changes to green + notes shown | Push notification |</w:t></w:r></w:p>
+
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>🎨 Design Theme Colors</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Background: #1A1A1A (Dark)</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Cards: #2A2A2A (Slightly lighter)</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Primary: #FF8C00 (Dark Orange)</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Text: #FFFFFF (White)</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Muted Text: #888888 (Gray)</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Success: #10b981 (Green)</w:t></w:r></w:p>
+<w:p><w:r><w:t>• Error: #ef4444 (Red)</w:t></w:r></w:p>
+
+<w:p><w:r><w:t>---</w:t></w:r></w:p>
+<w:p><w:r><w:t>VOO Citizen App | Kyamatu Ward | Version 7.0 | Document generated: December 9, 2024</w:t></w:r></w:p>
+
+</w:body>
+</w:wordDocument>

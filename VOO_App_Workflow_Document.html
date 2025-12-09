@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>VOO Citizen App - Complete Workflow</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #FF8C00;
+            border-bottom: 3px solid #FF8C00;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #1A1A1A;
+            background: #FFF3E0;
+            padding: 10px 15px;
+            border-left: 4px solid #FF8C00;
+            margin-top: 30px;
+        }
+
+        h3 {
+            color: #FF8C00;
+        }
+
+        img {
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: block;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #FF8C00;
+            color: white;
+        }
+
+        .note {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .important {
+            background: #FFF3E0;
+            border-left: 4px solid #FF8C00;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .screen-section {
+            page-break-inside: avoid;
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📱 VOO Citizen App - Complete Workflow Document</h1>
+    <p><strong>Version:</strong> 1.0 | <strong>Date:</strong> December 9, 2024</p>
+
+    <div class="important">
+        <strong>🎨 Design Theme:</strong> Dark background (#1A1A1A) with Orange accents (#FF8C00)
+    </div>
+
+    <hr>
+
+    <h2>🔐 Screen 1: Login</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/voo_login_full_1765273682833.png"
+            alt="Login Screen">
+
+        <h3>Features:</h3>
+        <ul>
+            <li><strong>Username field:</strong> Phone number or username</li>
+            <li><strong>Password field:</strong> User's chosen password</li>
+            <li><strong>Login button:</strong> Orange gradient</li>
+            <li><strong>"Create Account" link:</strong> Navigates to registration</li>
+        </ul>
+
+        <h3>User Flow:</h3>
+        <ol>
+            <li>Enter username (phone number)</li>
+            <li>Enter password</li>
+            <li>Tap "Login" → Home Screen</li>
+        </ol>
+    </div>
+
+    <h2>📝 Screen 2: Registration Step 1 - User Details</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/register_step1_mockup_1765275108751.png"
+            alt="Register Step 1">
+
+        <h3>Fields:</h3>
+        <ul>
+            <li><strong>Full Name:</strong> User's full name</li>
+            <li><strong>Phone Number:</strong> +254 format</li>
+            <li><strong>ID Number:</strong> National ID</li>
+            <li><strong>Village:</strong> Dropdown selection</li>
+        </ul>
+
+        <div class="important">
+            <strong>⚠️ Important:</strong> Phone number can only be used ONCE for registration. After successful
+            registration, it cannot register again.
+        </div>
+    </div>
+
+    <h2>📱 Screen 3: Registration Step 2 - OTP Verification</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/register_step2_mockup_1765275132042.png"
+            alt="Register Step 2">
+
+        <h3>Features:</h3>
+        <ul>
+            <li>6 separate OTP input boxes</li>
+            <li>Auto-submit when all digits entered</li>
+            <li>Resend option after 60 seconds</li>
+            <li>OTP expires in 10 minutes</li>
+        </ul>
+
+        <h3>Security:</h3>
+        <ul>
+            <li>3 attempts maximum</li>
+            <li>SMS sent via Infobip</li>
+        </ul>
+    </div>
+
+    <h2>🔒 Screen 4: Registration Step 3 - Create Password</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/register_step3_mockup_1765275148245.png"
+            alt="Register Step 3">
+
+        <h3>Password Requirements:</h3>
+        <ul>
+            <li>✅ Minimum 8 characters</li>
+            <li>✅ At least one letter</li>
+            <li>✅ At least one number</li>
+            <li>✅ At least one special character (!@#$%^&*)</li>
+        </ul>
+
+        <h3>After Success:</h3>
+        <p>Redirect to Login with username pre-filled</p>
+    </div>
+
+    <h2>🏠 Screen 5: Home Screen</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/home_screen_mockup_1765275169791.png"
+            alt="Home Screen">
+
+        <h3>Sections:</h3>
+        <ul>
+            <li><strong>Header:</strong> "Good Morning/Afternoon, [Name]"</li>
+            <li><strong>Announcements:</strong> From MCA admin dashboard</li>
+            <li><strong>Quick Actions:</strong> Report Issue, My Issues, Bursary, Emergency, Services, Profile</li>
+        </ul>
+
+        <div class="note">
+            <strong>📢 Announcements:</strong> Created by admin in dashboard → appear here immediately + push
+            notification sent
+        </div>
+    </div>
+
+    <h2>🚨 Screen 6: Report Issue</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/report_issue_mockup_1765275211020.png"
+            alt="Report Issue">
+
+        <h3>Fields:</h3>
+        <ul>
+            <li><strong>Title:</strong> Brief description</li>
+            <li><strong>Category:</strong> Roads, Water, Security, etc.</li>
+            <li><strong>Description:</strong> Detailed explanation</li>
+            <li><strong>Location:</strong> GPS or manual</li>
+            <li><strong>Photos:</strong> Up to 3 images</li>
+        </ul>
+
+        <h3>Features:</h3>
+        <ul>
+            <li>AI-enhanced descriptions</li>
+            <li>Image upload to Cloudinary</li>
+            <li>Unique issue number generated (ISS-XXXXXX)</li>
+        </ul>
+    </div>
+
+    <h2>📋 Screen 7: My Issues</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/my_issues_mockup_1765275277237.png" alt="My Issues">
+
+        <h3>Issue Status Badges:</h3>
+        <table>
+            <tr>
+                <th>Status</th>
+                <th>Color</th>
+                <th>Meaning</th>
+            </tr>
+            <tr>
+                <td>Pending</td>
+                <td>🟡 Yellow</td>
+                <td>Awaiting review</td>
+            </tr>
+            <tr>
+                <td>In Progress</td>
+                <td>🔵 Blue</td>
+                <td>Being worked on</td>
+            </tr>
+            <tr>
+                <td>Resolved</td>
+                <td>🟢 Green</td>
+                <td>Completed</td>
+            </tr>
+        </table>
+
+        <div class="note">
+            <strong>🔄 Dashboard Sync:</strong> When admin resolves issue:
+            <ul>
+                <li>Status changes to green</li>
+                <li>Resolution notes visible</li>
+                <li>Push notification sent</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>🎓 Screen 8: Bursary Application</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/bursary_mockup_1765275237833.png" alt="Bursary">
+
+        <h3>Application Fields:</h3>
+        <ul>
+            <li>Institution Name</li>
+            <li>Institution Type (Primary/Secondary/University)</li>
+            <li>Course</li>
+            <li>Year of Study</li>
+            <li>Amount Requested</li>
+            <li>Reason</li>
+        </ul>
+
+        <h3>Application Status:</h3>
+        <table>
+            <tr>
+                <th>Status</th>
+                <th>Meaning</th>
+            </tr>
+            <tr>
+                <td>🟡 Pending</td>
+                <td>Awaiting admin review</td>
+            </tr>
+            <tr>
+                <td>🟢 Approved</td>
+                <td>Shows approved amount</td>
+            </tr>
+            <tr>
+                <td>🔴 Rejected</td>
+                <td>Shows rejection reason</td>
+            </tr>
+        </table>
+
+        <div class="note">
+            <strong>📱 SMS Notification:</strong> Applicant receives SMS when approved/rejected
+        </div>
+    </div>
+
+    <h2>👤 Screen 9: Profile</h2>
+    <div class="screen-section">
+        <img src="file:///C:/Users/Admin/VOOAPP/recovered_artifacts/profile_mockup_1765275256155.png" alt="Profile">
+
+        <h3>Information Displayed:</h3>
+        <ul>
+            <li>Profile Picture</li>
+            <li>Full Name</li>
+            <li>Phone Number</li>
+            <li>Village</li>
+            <li>Issues Reported count</li>
+            <li>Issues Resolved count</li>
+        </ul>
+
+        <h3>Actions:</h3>
+        <ul>
+            <li>Edit Profile</li>
+            <li>Change Password</li>
+            <li>Logout</li>
+            <li>Delete Account (Danger Zone)</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2>🖥️ Admin Dashboard → App Sync</h2>
+
+    <table>
+        <tr>
+            <th>Admin Action</th>
+            <th>Effect in App</th>
+            <th>Notification</th>
+        </tr>
+        <tr>
+            <td>Create Announcement</td>
+            <td>Appears in Home carousel</td>
+            <td>Push notification</td>
+        </tr>
+        <tr>
+            <td>Approve Bursary</td>
+            <td>Status → Approved with amount</td>
+            <td>SMS to applicant</td>
+        </tr>
+        <tr>
+            <td>Reject Bursary</td>
+            <td>Status → Rejected with reason</td>
+            <td>SMS to applicant</td>
+        </tr>
+        <tr>
+            <td>Mark Issue In Progress</td>
+            <td>Badge changes to blue</td>
+            <td>Push notification</td>
+        </tr>
+        <tr>
+            <td>Resolve Issue</td>
+            <td>Badge changes to green + notes shown</td>
+            <td>Push notification</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <p style="text-align: center; color: #888; margin-top: 40px;">
+        <strong>VOO Citizen App</strong> | Kyamatu Ward | Version 7.0<br>
+        Document generated: December 9, 2024
+    </p>
+
+</body>
+
+</html>

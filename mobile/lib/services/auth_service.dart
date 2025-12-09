@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'supabase_service.dart';
+import 'dashboard_service.dart';
 
 class AuthService extends ChangeNotifier {
   // Supabase REST API base URL (for backwards compatibility)
@@ -77,25 +78,17 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>> login(String phone, String password) async {
+  Future<Map<String, dynamic>> login(String username, String password) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Format phone number
-      String formattedPhone = phone;
-      if (!phone.startsWith('+254')) {
-        formattedPhone = '+254$phone';
-      }
-
-      final result = await SupabaseService.login(
-        phone: formattedPhone,
-        password: password,
-      );
+      // Try dashboard login first (new mobile user system)
+      final result = await DashboardService.loginUser(username, password);
 
       if (result['success'] == true) {
         _user = result['user'];
-        _token = 'supabase_session_${DateTime.now().millisecondsSinceEpoch}';
+        _token = result['token'] ?? 'dashboard_session_${DateTime.now().millisecondsSinceEpoch}';
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
@@ -114,7 +107,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> register(String fullName, String phone, String idNumber, String password, {String? village}) async {
+  Future<Map<String, dynamic>> register(String fullName, String phone, String idNumber, String password, {String? village, String? username}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -125,24 +118,19 @@ class AuthService extends ChangeNotifier {
         formattedPhone = '+254$phone';
       }
 
-      final result = await SupabaseService.register(
+      // Use dashboard mobile registration
+      final result = await DashboardService.registerUser(
         fullName: fullName,
-        phone: formattedPhone,
-        idNumber: idNumber,
+        username: username ?? phone.replaceAll('+254', ''),
+        phoneNumber: formattedPhone,
         password: password,
+        nationalId: idNumber,
         village: village,
       );
 
       if (result['success'] == true) {
-        _user = result['user'];
-        _token = 'supabase_session_${DateTime.now().millisecondsSinceEpoch}';
-        
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
-        await prefs.setString('user', jsonEncode(_user));
-        await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
-        notifyListeners();
-        return {'success': true};
+        // Don't auto-login, redirect to login screen with username pre-filled
+        return {'success': true, 'username': username ?? phone.replaceAll('+254', '')};
       } else {
         return {'success': false, 'error': result['error'] ?? 'Registration failed'};
       }

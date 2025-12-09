@@ -8,85 +8,41 @@ import 'register_screen.dart';
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? prefilledUsername;
+  const LoginScreen({super.key, this.prefilledUsername});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController();
+  late TextEditingController _usernameController;
   final _passwordController = TextEditingController();
-  final _phoneFocusNode = FocusNode();
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
-  bool _rememberMe = false;
   bool _isGoogleLoading = false;
-
-  // Theme colors matching reference
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color lightPink = Color(0xFFF5ADA7);
-  static const Color darkPink = Color(0xFFD4635B);
-  static const Color bgPink = Color(0xFFF9C5C1);
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _phoneFocusNode.addListener(() => setState(() {}));
+    _usernameController = TextEditingController(text: widget.prefilledUsername ?? '');
   }
+
+  // Dark Orange Theme Colors
+  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color cardDark = Color(0xFF2A2A2A);
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color lightOrange = Color(0xFFFFB347);
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
+  static const Color inputBg = Color(0xFF333333);
 
   @override
   void dispose() {
-    _phoneFocusNode.dispose();
-    _phoneController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _showTermsDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-            ),
-            const SizedBox(height: 20),
-            const Text('Terms & Privacy', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Color(0xFF333333))),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  'By using VOO Citizen, you agree to our Terms of Service and Privacy Policy. We collect necessary data to provide our services, including location and device information for verification purposes. Your data is encrypted and protected.',
-                  style: TextStyle(color: Colors.grey.shade600, height: 1.6),
-                ),
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryPink,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('I Understand', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -95,340 +51,307 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() => _isGoogleLoading = false);
       if (result['success'] == true) {
-        // Use AuthService to properly set Google user state
         final auth = context.read<AuthService>();
         await auth.setGoogleUser(result['user']);
-        
-        _showSuccess('Welcome, ${result['user']['fullName']}!');
-        if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+        if (mounted) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+        }
       } else {
-        _showError(result['error'] ?? 'Google sign-in failed');
+        _showSnackBar(result['error'] ?? 'Google sign-in failed', isError: true);
       }
     }
   }
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: darkPink, behavior: SnackBarBehavior.floating),
-    );
-  }
-
-  void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF4CAF50), behavior: SnackBarBehavior.floating),
-    );
-  }
-
   Future<void> _handleLogin() async {
-    if (_phoneController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showError('Please fill in all fields');
+    final phone = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    if (phone.isEmpty || password.isEmpty) {
+      _showSnackBar('Please enter phone and password', isError: true);
       return;
     }
+
     if (!_acceptedTerms) {
-      _showError('Please accept Terms & Privacy Policy');
+      _showSnackBar('Please accept Terms & Privacy', isError: true);
       return;
     }
+
+    setState(() => _isLoading = true);
     final auth = context.read<AuthService>();
-    final result = await auth.login(_phoneController.text, _passwordController.text);
-    if (!result['success'] && mounted) {
-      _showError(result['error']);
+    final result = await auth.login(phone, password);
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (result['success'] == true) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+      } else {
+        _showSnackBar(result['error'] ?? 'Login failed', isError: true);
+      }
     }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : primaryOrange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background with blob pattern
-          Container(
-            width: size.width,
-            height: size.height,
-            color: bgPink,
-          ),
-          
-          // Decorative blobs
-          Positioned(
-            top: -50,
-            right: -80,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryPink.withOpacity(0.4),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 100,
-            left: -60,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: lightPink.withOpacity(0.5),
-              ),
-            ),
-          ),
-          Positioned(
-            top: size.height * 0.25,
-            right: -40,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryPink.withOpacity(0.3),
-              ),
-            ),
-          ),
-
-          // Welcome text
-          Positioned(
-            top: size.height * 0.12,
-            left: 32,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    shadows: [Shadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 2), blurRadius: 4)],
-                  ),
+      backgroundColor: bgDark,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 60),
+              
+              // Title
+              const Text(
+                'LOGIN TO',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w300,
+                  color: textLight,
+                  letterSpacing: 2,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign in to continue',
-                  style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.9)),
-                ),
-              ],
-            ),
-          ),
-
-          // White form card at bottom
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(28, 36, 28, 40),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 20, offset: Offset(0, -5))],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Sign in', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600, color: Color(0xFF333333))),
-                  const SizedBox(height: 28),
-
-                  // Phone Field
-                  _buildTextField(
-                    controller: _phoneController,
-                    focusNode: _phoneFocusNode,
-                    hint: 'Phone Number',
-                    prefix: '+254',
-                    keyboardType: TextInputType.phone,
-                    icon: Icons.phone_outlined,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Password Field
-                  _buildTextField(
-                    controller: _passwordController,
-                    hint: 'Password',
-                    obscure: _obscurePassword,
-                    icon: Icons.lock_outline,
-                    suffix: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              const Text(
+                'VOO WARD',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: primaryOrange,
+                  letterSpacing: 1,
+                ),
+              ),
+              
+              const SizedBox(height: 50),
+              
+              // Login Card
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: cardDark,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: primaryOrange.withOpacity(0.3), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryOrange.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Remember & Forgot
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 22, height: 22,
-                            child: Checkbox(
-                              value: _rememberMe,
-                              onChanged: (v) => setState(() => _rememberMe = v ?? false),
-                              activeColor: primaryPink,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              side: BorderSide(color: Colors.grey.shade400),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text('Remember me', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                        ],
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-                        child: Text('Forgot Password?', style: TextStyle(color: primaryPink, fontSize: 13, fontWeight: FontWeight.w500)),
-                      ),
-                    ],
-                  ),
-
-                  // Terms
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 22, height: 22,
-                        child: Checkbox(
-                          value: _acceptedTerms,
-                          onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
-                          activeColor: primaryPink,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          side: BorderSide(color: _acceptedTerms ? primaryPink : Colors.orange.shade400),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Username Input (matching mockup)
+                    _buildInputField(
+                      controller: _usernameController,
+                      hint: 'Username',
+                      prefix: '@',
+                      icon: Icons.alternate_email,
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Password Input
+                    _buildInputField(
+                      controller: _passwordController,
+                      hint: 'Password',
+                      icon: Icons.lock_outline,
+                      obscure: _obscurePassword,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: textMuted,
+                          size: 20,
                         ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: _showTermsDialog,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Terms Checkbox
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: _acceptedTerms,
+                            onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
+                            activeColor: primaryOrange,
+                            checkColor: bgDark,
+                            side: BorderSide(color: textMuted),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
                           child: RichText(
                             text: TextSpan(
-                              text: 'I agree to ',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              style: const TextStyle(color: textMuted, fontSize: 13),
                               children: [
-                                TextSpan(text: 'Terms & Privacy', style: TextStyle(color: primaryPink, fontWeight: FontWeight.w500)),
+                                const TextSpan(text: 'I accept the '),
+                                TextSpan(
+                                  text: 'Terms & Privacy',
+                                  style: const TextStyle(color: primaryOrange, fontWeight: FontWeight.w600),
+                                  recognizer: TapGestureRecognizer()..onTap = _showTermsDialog,
+                                ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Sign In Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: auth.isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryPink,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: auth.isLoading
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Divider
-                  Row(
-                    children: [
-                      Expanded(child: Container(height: 1, color: Colors.grey.shade200)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('or', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                      ),
-                      Expanded(child: Container(height: 1, color: Colors.grey.shade200)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Google Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton.icon(
-                      onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
-                      icon: _isGoogleLoading
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Image.network('https://www.google.com/favicon.ico', width: 20, errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata)),
-                      label: Text(_isGoogleLoading ? 'Signing in...' : 'Continue with Google', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.grey.shade700,
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    const SizedBox(height: 8),
+                    
+                    // Forgot Password
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                        child: const Text('Forgot Password?', style: TextStyle(color: primaryOrange, fontSize: 13)),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Register Link
-                  Center(
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                      child: RichText(
-                        text: TextSpan(
-                          text: "Don't have an account? ",
-                          style: TextStyle(color: Colors.grey.shade600),
-                          children: [TextSpan(text: 'Sign Up', style: TextStyle(color: primaryPink, fontWeight: FontWeight.w600))],
+                    const SizedBox(height: 16),
+                    
+                    // Sign In Button
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryOrange,
+                          foregroundColor: bgDark,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
                         ),
+                        child: _isLoading
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: bgDark, strokeWidth: 2))
+                            : const Text('SIGN IN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 1)),
                       ),
                     ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Google Sign In Removed (Manual Registration Only)
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 30),
+              
+              // Register Link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Don't have an account? ", style: TextStyle(color: textMuted, fontSize: 14)),
+                  GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                    child: const Text('Register', style: TextStyle(color: primaryOrange, fontSize: 14, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
-            ),
+              
+              const SizedBox(height: 40),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildInputField({
     required TextEditingController controller,
     required String hint,
     required IconData icon,
-    FocusNode? focusNode,
-    TextInputType? keyboardType,
-    bool obscure = false,
-    Widget? suffix,
     String? prefix,
+    bool obscure = false,
+    Widget? suffixIcon,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        color: inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.transparent),
       ),
       child: TextField(
         controller: controller,
-        focusNode: focusNode,
-        keyboardType: keyboardType,
         obscureText: obscure,
-        style: const TextStyle(fontSize: 15, color: Color(0xFF333333)),
+        keyboardType: keyboardType,
+        style: const TextStyle(color: textLight, fontSize: 15),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade400),
+          hintStyle: const TextStyle(color: textMuted, fontSize: 15),
           prefixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(width: 16),
-              Icon(icon, color: primaryPink, size: 22),
+              Icon(icon, color: primaryOrange, size: 20),
               if (prefix != null) ...[
-                const SizedBox(width: 10),
-                Text(prefix, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                const SizedBox(width: 8),
+                Text(prefix, style: const TextStyle(color: textLight, fontSize: 15)),
+                const SizedBox(width: 4),
               ],
-              const SizedBox(width: 12),
             ],
           ),
           prefixIconConstraints: const BoxConstraints(minWidth: 0),
-          suffixIcon: suffix,
+          suffixIcon: suffixIcon,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  void _showTermsDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardDark,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: textMuted, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            const Text('Terms & Privacy', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textLight)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  'By using VOO Citizen, you agree to our Terms of Service and Privacy Policy. We collect necessary data to provide our services, including location and device information for verification purposes. Your data is encrypted and protected.',
+                  style: TextStyle(color: textMuted, height: 1.6),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('I Understand', style: TextStyle(color: bgDark, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
         ),
       ),
     );

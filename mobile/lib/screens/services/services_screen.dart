@@ -24,8 +24,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
   bool _isLoading = false;
 
   // Theme colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color bgPink = Color(0xFFF9C5C1);
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color bgDark = Color(0xFFF9C5C1);
   static const Color textDark = Color(0xFF333333);
   static const Color textMuted = Color(0xFF666666);
   static const Color cardBg = Color(0xFFFFFFFF);
@@ -85,7 +85,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgPink,
+      backgroundColor: bgDark,
       body: Stack(
         children: [
           // Static background decoration
@@ -109,7 +109,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: primaryPink.withOpacity(0.4),
+                color: primaryOrange.withOpacity(0.4),
               ),
             ),
           ),
@@ -153,7 +153,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     ),
                     child: RefreshIndicator(
                       onRefresh: _loadData,
-                      color: primaryPink,
+                      color: primaryOrange,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(24),
@@ -186,7 +186,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                 const Text('Emergency Contacts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
                                 TextButton(
                                   onPressed: () => _showEmergencyContacts(context),
-                                  child: const Text('View All', style: TextStyle(color: primaryPink, fontWeight: FontWeight.w600)),
+                                  child: const Text('View All', style: TextStyle(color: primaryOrange, fontWeight: FontWeight.w600)),
                                 ),
                               ],
                             ),
@@ -259,8 +259,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(color: primaryPink.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                                          child: const Icon(Icons.campaign_outlined, color: primaryPink, size: 20),
+                                          decoration: BoxDecoration(color: primaryOrange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                                          child: const Icon(Icons.campaign_outlined, color: primaryOrange, size: 20),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -363,7 +363,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted successfully!'), backgroundColor: Color(0xFF10B981)));
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryPink,
+                  backgroundColor: primaryOrange,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
@@ -412,7 +412,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: Color(0xFF10B981)));
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryPink,
+                  backgroundColor: primaryOrange,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
@@ -441,7 +441,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400),
-          prefixIcon: maxLines == 1 ? Icon(icon, color: primaryPink, size: 22) : Container(margin: const EdgeInsets.only(top: 12), alignment: Alignment.topCenter, width: 48, child: Icon(icon, color: primaryPink, size: 22)),
+          prefixIcon: maxLines == 1 ? Icon(icon, color: primaryOrange, size: 22) : Container(margin: const EdgeInsets.only(top: 12), alignment: Alignment.topCenter, width: 48, child: Icon(icon, color: primaryOrange, size: 22)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
@@ -511,7 +511,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx), 
-            child: const Text('Close', style: TextStyle(color: primaryPink, fontWeight: FontWeight.w600))
+            child: const Text('Close', style: TextStyle(color: primaryOrange, fontWeight: FontWeight.w600))
           ),
         ],
       ),

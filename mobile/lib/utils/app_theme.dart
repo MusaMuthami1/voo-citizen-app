@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
 
-/// App-wide theme colors matching the coral/salmon pink design
+/// App-wide theme colors matching the Dark Orange design
+/// Background: #1A1A1A
+/// Primary Accent: #FF8C00
 class AppTheme {
   // Primary colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color lightPink = Color(0xFFF5ADA7);
-  static const Color darkPink = Color(0xFFD4635B);
-  static const Color bgPink = Color(0xFFF9C5C1);
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color darkOrange = Color(0xFFE67E00);
+  static const Color lightOrange = Color(0xFFFFB347);
+  static const Color bgDark = Color(0xFF1A1A1A);
   
-  // Neutral colors
-  static const Color textDark = Color(0xFF333333);
-  static const Color textMuted = Color(0xFF666666);
-  static const Color textLight = Color(0xFF999999);
-  static const Color cardBg = Color(0xFFF8F8F8);
-  static const Color divider = Color(0xFFE0E0E0);
+  // Surface colors
+  static const Color cardDark = Color(0xFF2A2A2A);
+  static const Color inputBg = Color(0xFF333333);
+  static const Color divider = Color(0xFF444444);
+  
+  // Text colors
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
+  static const Color textDark = Color(0xFF1A1A1A); // for buttons
   
   // Status colors
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
+  static const Color error = Color(0xFFCF6679);
   
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryPink, lightPink],
+    colors: [primaryOrange, lightOrange],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -36,15 +41,15 @@ class AppTheme {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: textLight),
+      hintStyle: const TextStyle(color: textMuted),
       prefixIcon: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(width: 16),
-          Icon(icon, color: primaryPink, size: 22),
+          Icon(icon, color: primaryOrange, size: 22),
           if (prefix != null) ...[
             const SizedBox(width: 10),
-            Text(prefix, style: const TextStyle(color: textMuted, fontWeight: FontWeight.w500)),
+            Text(prefix, style: const TextStyle(color: textLight, fontWeight: FontWeight.w500)),
           ],
           const SizedBox(width: 12),
         ],
@@ -52,18 +57,18 @@ class AppTheme {
       prefixIconConstraints: const BoxConstraints(minWidth: 0),
       suffixIcon: suffix,
       filled: true,
-      fillColor: cardBg,
+      fillColor: inputBg,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: divider),
+        borderSide: const BorderSide(color: divider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: divider),
+        borderSide: const BorderSide(color: divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: primaryPink, width: 1.5),
+        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
     );
@@ -71,15 +76,16 @@ class AppTheme {
 
   // Button styles
   static ButtonStyle primaryButton = ElevatedButton.styleFrom(
-    backgroundColor: primaryPink,
-    foregroundColor: Colors.white,
+    backgroundColor: primaryOrange,
+    foregroundColor: bgDark,
     elevation: 0,
     padding: const EdgeInsets.symmetric(vertical: 16),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
   );
 
   static ButtonStyle outlineButton = OutlinedButton.styleFrom(
-    foregroundColor: textDark,
+    foregroundColor: textLight,
     side: const BorderSide(color: divider),
     padding: const EdgeInsets.symmetric(vertical: 16),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -87,38 +93,67 @@ class AppTheme {
 
   // Card decoration
   static BoxDecoration cardDecoration = BoxDecoration(
-    color: Colors.white,
+    color: cardDark,
     borderRadius: BorderRadius.circular(20),
-    boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 10, offset: Offset(0, 2))],
+    border: Border.all(color: divider.withOpacity(0.5)),
+    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
   );
 
   // App ThemeData
   static ThemeData get themeData => ThemeData(
-    primaryColor: primaryPink,
-    scaffoldBackgroundColor: bgPink,
-    colorScheme: ColorScheme.light(
-      primary: primaryPink,
-      secondary: lightPink,
-      surface: Colors.white,
-      background: bgPink,
+    primaryColor: primaryOrange,
+    scaffoldBackgroundColor: bgDark,
+    colorScheme: const ColorScheme.dark(
+      primary: primaryOrange,
+      secondary: lightOrange,
+      surface: cardDark,
+      background: bgDark,
       error: error,
+      onPrimary: bgDark,
+      onSecondary: bgDark,
+      onSurface: textLight,
+      onBackground: textLight,
+      onError: bgDark,
+      brightness: Brightness.dark,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryPink,
-      foregroundColor: Colors.white,
+      backgroundColor: bgDark,
+      foregroundColor: textLight,
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+      titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textLight),
+      iconTheme: IconThemeData(color: textLight),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(style: primaryButton),
     outlinedButtonTheme: OutlinedButtonThemeData(style: outlineButton),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: inputBg,
+      hintStyle: const TextStyle(color: textMuted),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: divider)),
+    ),
+    cardTheme: CardTheme(
+      color: cardDark,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 4,
+    ),
     checkboxTheme: CheckboxThemeData(
       fillColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) return primaryPink;
+        if (states.contains(MaterialState.selected)) return primaryOrange;
         return Colors.transparent;
       }),
+      checkColor: MaterialStateProperty.all(bgDark),
+      side: const BorderSide(color: textMuted, width: 2),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: cardDark,
+      selectedItemColor: primaryOrange,
+      unselectedItemColor: textMuted,
+      type: BottomNavigationBarType.fixed,
+      elevation: 10,
+    ),
     fontFamily: 'Roboto',
+    useMaterial3: true,
   );
 }

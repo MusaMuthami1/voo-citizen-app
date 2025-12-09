@@ -21,11 +21,13 @@ class _BursaryScreenState extends State<BursaryScreen> {
   bool _isSubmitting = false;
 
   // Theme colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color lightPink = Color(0xFFF5ADA7);
-  static const Color bgPink = Color(0xFFF9C5C1);
-  static const Color textDark = Color(0xFF333333);
-  static const Color textMuted = Color(0xFF666666);
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color lightPink = Color(0xFFFFB347); // Now Light Orange
+  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
+  static const Color cardDark = Color(0xFF2A2A2A);
+  static const Color inputBg = Color(0xFF333333);
 
   // Form controllers
   final _institutionController = TextEditingController();
@@ -194,10 +196,10 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
       body: Stack(
         children: [
           // Background
-          Container(width: size.width, height: size.height, color: bgPink),
+          Container(width: size.width, height: size.height, color: bgDark),
           
           // Decorative circles
-          Positioned(top: -40, right: -60, child: _buildCircle(180, primaryPink.withOpacity(0.4))),
+          Positioned(top: -40, right: -60, child: _buildCircle(180, primaryOrange.withOpacity(0.4))),
           Positioned(top: 120, left: -40, child: _buildCircle(120, lightPink.withOpacity(0.5))),
 
           // Content
@@ -222,10 +224,10 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                       ),
                       if (!_showForm)
                         Container(
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                          decoration: BoxDecoration(color: cardDark, borderRadius: BorderRadius.circular(12)),
                           child: IconButton(
                             onPressed: () => setState(() => _showForm = true),
-                            icon: const Icon(Icons.add, color: primaryPink),
+                            icon: const Icon(Icons.add, color: primaryOrange),
                           ),
                         )
                       else
@@ -240,7 +242,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                     width: double.infinity,
                     margin: const EdgeInsets.only(top: 8),
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: cardDark, // cardDark
                       borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                     ),
                     child: _showForm ? _buildApplicationForm() : _buildApplicationsList(),
@@ -260,7 +262,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
 
   Widget _buildApplicationsList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: primaryPink));
+      return const Center(child: CircularProgressIndicator(color: primaryOrange));
     }
 
     if (_applications.isEmpty) {
@@ -272,18 +274,18 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
             children: [
               Container(
                 width: 100, height: 100,
-                decoration: BoxDecoration(color: bgPink, shape: BoxShape.circle),
-                child: const Icon(Icons.school_outlined, size: 50, color: primaryPink),
+                decoration: BoxDecoration(color: bgDark, shape: BoxShape.circle),
+                child: const Icon(Icons.school_outlined, size: 50, color: primaryOrange),
               ),
               const SizedBox(height: 24),
-              const Text('No Applications', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textDark)),
+              const Text('No Applications', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textLight)),
               const SizedBox(height: 8),
               Text('Apply for a bursary to fund your education', style: TextStyle(color: textMuted), textAlign: TextAlign.center),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () => setState(() => _showForm = true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryPink,
+                  backgroundColor: primaryOrange,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
@@ -297,7 +299,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
 
     return RefreshIndicator(
       onRefresh: _loadApplications,
-      color: primaryPink,
+      color: primaryOrange,
       child: ListView.builder(
         padding: const EdgeInsets.all(20),
         itemCount: _applications.length,
@@ -308,7 +310,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F8F8),
+              color: const Color(0xFF333333), // inputBg
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _getStatusColor(status).withOpacity(0.3)),
             ),
@@ -318,7 +320,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(app['applicationNumber'] ?? '#${i + 1}', style: const TextStyle(color: primaryPink, fontWeight: FontWeight.w600)),
+                    Text(app['applicationNumber'] ?? '#${i + 1}', style: const TextStyle(color: primaryOrange, fontWeight: FontWeight.w600)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -330,7 +332,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(app['institutionName'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textDark)),
+                Text(app['institutionName'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textLight)),
                 const SizedBox(height: 4),
                 Text(app['course'] ?? '', style: TextStyle(color: textMuted)),
                 if (status == 'approved') ...[
@@ -372,7 +374,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                 margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
-                  color: i <= _currentStep ? primaryPink : Colors.grey.shade200,
+                  color: i <= _currentStep ? primaryOrange : Colors.grey.shade200,
                 ),
               ),
             )),
@@ -400,8 +402,8 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                   child: OutlinedButton(
                     onPressed: _prevStep,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: textDark,
-                      side: BorderSide(color: Colors.grey.shade300),
+                      foregroundColor: textLight,
+                      side: BorderSide(color: Colors.grey.shade700),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
@@ -414,7 +416,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                 child: ElevatedButton(
                   onPressed: _currentStep < 3 ? _nextStep : (_isSubmitting ? null : _submitApplication),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryPink,
+                    backgroundColor: primaryOrange,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
@@ -522,17 +524,17 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
         _buildLabel('Why do you need this bursary?'),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8F8),
+            color: inputBg,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: Colors.grey.shade800),
           ),
           child: TextField(
             controller: _reasonController,
             maxLines: 6,
-            style: const TextStyle(color: textDark),
+            style: const TextStyle(color: textLight),
             decoration: InputDecoration(
               hintText: 'Explain your situation...',
-              hintStyle: TextStyle(color: Colors.grey.shade400),
+              hintStyle: TextStyle(color: Colors.grey.shade600),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -562,25 +564,25 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textDark)),
+      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textLight)),
     );
   }
 
   Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
+        color: inputBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade800),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: textDark),
+        style: const TextStyle(color: textLight),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade400),
-          prefixIcon: Icon(icon, color: primaryPink, size: 22),
+          hintStyle: TextStyle(color: Colors.grey.shade600),
+          prefixIcon: Icon(icon, color: primaryOrange, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),
@@ -592,16 +594,18 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
+        color: inputBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade800),
       ),
       child: DropdownButtonFormField<String>(
         value: value,
-        hint: Text('Select institution', style: TextStyle(color: Colors.grey.shade400)),
-        icon: const Icon(Icons.keyboard_arrow_down, color: primaryPink),
+        hint: Text('Select institution', style: TextStyle(color: Colors.grey.shade600)),
+        dropdownColor: cardDark,
+        style: const TextStyle(color: textLight),
+        icon: const Icon(Icons.keyboard_arrow_down, color: primaryOrange),
         decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.school_outlined, color: primaryPink, size: 22),
+          prefixIcon: Icon(Icons.school_outlined, color: primaryOrange, size: 22),
           prefixIconConstraints: BoxConstraints(minWidth: 40),
           border: InputBorder.none,
         ),
@@ -622,9 +626,9 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
             margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: _institutionType == types[i] ? primaryPink : const Color(0xFFF8F8F8),
+              color: _institutionType == types[i] ? primaryOrange : inputBg,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _institutionType == types[i] ? primaryPink : Colors.grey.shade200),
+              border: Border.all(color: _institutionType == types[i] ? primaryOrange : Colors.grey.shade800),
             ),
             child: Text(
               labels[i],
@@ -645,16 +649,16 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
+        color: inputBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: const TextStyle(color: textDark))),
+          Expanded(child: Text(title, style: const TextStyle(color: textLight))),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: primaryPink,
+            activeColor: primaryOrange,
           ),
         ],
       ),
@@ -667,28 +671,31 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
     return Wrap(
       spacing: 10,
       runSpacing: 10,
-      children: List.generate(relations.length, (i) => GestureDetector(
-        onTap: () => setState(() => _guardianRelation = relations[i]),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: _guardianRelation == relations[i] ? primaryPink : const Color(0xFFF8F8F8),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _guardianRelation == relations[i] ? primaryPink : Colors.grey.shade200),
+      children: List.generate(relations.length, (i) {
+        final isSelected = _guardianRelation == relations[i];
+        return GestureDetector(
+          onTap: () => setState(() => _guardianRelation = relations[i]),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? primaryOrange : inputBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: isSelected ? primaryOrange : Colors.grey.shade800),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icons[i], color: isSelected ? Colors.white : textMuted, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  relations[i][0].toUpperCase() + relations[i].substring(1),
+                  style: TextStyle(color: isSelected ? Colors.white : textMuted),
+                ),
+              ],
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icons[i], color: _guardianRelation == relations[i] ? Colors.white : textMuted, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                relations[i][0].toUpperCase() + relations[i].substring(1),
-                style: TextStyle(color: _guardianRelation == relations[i] ? Colors.white : textMuted),
-              ),
-            ],
-          ),
-        ),
-      )),
+        );
+      }),
     );
   }
 }

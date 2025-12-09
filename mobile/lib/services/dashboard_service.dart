@@ -16,13 +16,13 @@ class DashboardService {
     if (_sessionToken != null) 'Authorization': 'Bearer $_sessionToken',
   };
 
-  // ============ AUTH ============
+  // ============ MOBILE AUTH ============
   
-  /// Request OTP for login
+  /// Request OTP for phone verification
   static Future<Map<String, dynamic>> requestOtp(String phoneNumber) async {
     try {
       final res = await http.post(
-        Uri.parse('$apiBase/request-otp'),
+        Uri.parse('$apiBase/mobile/otp/send'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'phoneNumber': phoneNumber}),
       );
@@ -32,13 +32,55 @@ class DashboardService {
     }
   }
 
-  /// Verify OTP and login
+  /// Verify OTP
   static Future<Map<String, dynamic>> verifyOtp(String phoneNumber, String otp) async {
     try {
       final res = await http.post(
-        Uri.parse('$apiBase/verify-otp'),
+        Uri.parse('$apiBase/mobile/otp/verify'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'phoneNumber': phoneNumber, 'otp': otp}),
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Verify failed: $e'};
+    }
+  }
+
+  /// Register new mobile user
+  static Future<Map<String, dynamic>> registerUser({
+    required String fullName,
+    required String username,
+    required String phoneNumber,
+    required String password,
+    String? nationalId,
+    String? village,
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiBase/mobile/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'fullName': fullName,
+          'username': username,
+          'phoneNumber': phoneNumber,
+          'password': password,
+          'nationalId': nationalId ?? '',
+          'village': village ?? '',
+        }),
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Registration failed: $e'};
+    }
+  }
+
+  /// Login with username/password
+  static Future<Map<String, dynamic>> loginUser(String username, String password) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$apiBase/mobile/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'password': password}),
       );
       
       final data = jsonDecode(res.body);
@@ -48,6 +90,33 @@ class DashboardService {
       return data;
     } catch (e) {
       return {'success': false, 'error': 'Login failed: $e'};
+    }
+  }
+
+  /// Get user profile
+  static Future<Map<String, dynamic>> getProfile(String userId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$apiBase/mobile/profile/$userId'),
+        headers: _headers,
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Failed to get profile: $e'};
+    }
+  }
+
+  /// Update user profile
+  static Future<Map<String, dynamic>> updateProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      final res = await http.put(
+        Uri.parse('$apiBase/mobile/profile/$userId'),
+        headers: _headers,
+        body: jsonEncode(data),
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'error': 'Failed to update profile: $e'};
     }
   }
 

@@ -6,8 +6,8 @@ class IssueDetailsScreen extends StatelessWidget {
   const IssueDetailsScreen({super.key, required this.issue});
 
   // Theme colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color bgPink = Color(0xFFF9C5C1);
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color bgDark = Color(0xFFF9C5C1);
   static const Color textDark = Color(0xFF333333);
   static const Color textMuted = Color(0xFF666666);
   static const Color cardBg = Color(0xFFFFFFFF);
@@ -17,10 +17,10 @@ class IssueDetailsScreen extends StatelessWidget {
     final status = (issue['status'] ?? 'pending').toString().toLowerCase();
     
     return Scaffold(
-      backgroundColor: bgPink,
+      backgroundColor: bgDark,
       appBar: AppBar(
         title: const Text('Issue Details', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
-        backgroundColor: bgPink,
+        backgroundColor: bgDark,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -68,15 +68,15 @@ class IssueDetailsScreen extends StatelessWidget {
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: bgPink.withOpacity(0.3),
+                    color: bgDark.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: bgPink),
+                    border: Border.all(color: bgDark),
                   ),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.image_not_supported_outlined, size: 40, color: primaryPink.withOpacity(0.6)),
+                        Icon(Icons.image_not_supported_outlined, size: 40, color: primaryOrange.withOpacity(0.6)),
                         const SizedBox(height: 8),
                         Text('No image provided', style: TextStyle(color: textMuted.withOpacity(0.7))),
                       ],
@@ -111,7 +111,7 @@ class IssueDetailsScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.location_on, size: 16, color: primaryPink),
+                  const Icon(Icons.location_on, size: 16, color: primaryOrange),
                   const SizedBox(width: 4),
                   Text(
                     issue['location'] ?? 'Unknown Location',
@@ -198,13 +198,13 @@ class IssueDetailsScreen extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isActive ? (isCompleted ? const Color(0xFF10B981) : primaryPink) : Colors.grey.shade200,
+                  color: isActive ? (isCompleted ? const Color(0xFF10B981) : primaryOrange) : Colors.grey.shade200,
                   border: Border.all(
-                    color: isActive ? (isCompleted ? const Color(0xFF10B981) : primaryPink) : Colors.grey.shade300, 
+                    color: isActive ? (isCompleted ? const Color(0xFF10B981) : primaryOrange) : Colors.grey.shade300, 
                     width: 2
                   ),
                   boxShadow: isActive ? [
-                    BoxShadow(color: (isCompleted ? const Color(0xFF10B981) : primaryPink).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))
+                    BoxShadow(color: (isCompleted ? const Color(0xFF10B981) : primaryOrange).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))
                   ] : null,
                 ),
                 child: isActive && isCompleted ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
@@ -213,7 +213,7 @@ class IssueDetailsScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: 2,
-                    color: isActive ? primaryPink.withOpacity(0.3) : Colors.grey.shade200,
+                    color: isActive ? primaryOrange.withOpacity(0.3) : Colors.grey.shade200,
                   ),
                 ),
             ],

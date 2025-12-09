@@ -17,11 +17,11 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
   bool _isLoading = true;
 
   // Theme colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color bgPink = Color(0xFFF9C5C1);
-  static const Color textDark = Color(0xFF333333);
-  static const Color textMuted = Color(0xFF666666);
-  static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
+  static const Color cardBg = Color(0xFF2A2A2A);
 
   @override
   void initState() {
@@ -96,7 +96,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
     else if (hour >= 17) greeting = 'Good Evening';
 
     return Scaffold(
-      backgroundColor: bgPink,
+      backgroundColor: bgDark,
       body: Stack(
         children: [
           // Static background decoration (no animation)
@@ -108,7 +108,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
               height: 150,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: primaryPink.withOpacity(0.3),
+                color: primaryOrange.withOpacity(0.3),
               ),
             ),
           ),
@@ -159,11 +159,11 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                   child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: Color(0xFF2A2A2A), // card cardDark
                       borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                     ),
                     child: _isLoading
-                        ? const Center(child: CircularProgressIndicator(color: primaryPink))
+                        ? const Center(child: CircularProgressIndicator(color: primaryOrange))
                         : _issues.isEmpty
                             ? Center(
                                 child: Column(
@@ -172,10 +172,10 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
-                                        color: bgPink.withOpacity(0.3),
+                                        color: bgDark.withOpacity(0.3),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(Icons.assignment_outlined, size: 60, color: primaryPink.withOpacity(0.6)),
+                                      child: Icon(Icons.assignment_outlined, size: 60, color: primaryOrange.withOpacity(0.6)),
                                     ),
                                     const SizedBox(height: 16),
                                     const Text(
@@ -199,7 +199,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                               )
                             : RefreshIndicator(
                                 onRefresh: _loadIssues,
-                                color: primaryPink,
+                                color: primaryOrange,
                                 child: ListView.builder(
                                   padding: const EdgeInsets.all(20),
                                   itemCount: _issues.length,
@@ -220,11 +220,11 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                       child: Container(
                                         margin: const EdgeInsets.only(bottom: 16),
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: const Color(0xFF333333),
                                           borderRadius: BorderRadius.circular(20),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(0.04),
+                                              color: Colors.black.withOpacity(0.2),
                                               blurRadius: 15,
                                               offset: const Offset(0, 4),
                                             ),
@@ -240,7 +240,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                                 height: 70,
                                                 decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(16),
-                                                  color: bgPink.withOpacity(0.3),
+                                                  color: bgDark.withOpacity(0.3),
                                                   image: issue['images']?.isNotEmpty == true
                                                       ? DecorationImage(
                                                           image: NetworkImage(issue['images'][0]),
@@ -250,7 +250,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                                 ),
                                                 child: issue['images']?.isNotEmpty == true
                                                     ? null
-                                                    : const Icon(Icons.image_outlined, color: primaryPink, size: 30),
+                                                    : const Icon(Icons.image_outlined, color: primaryOrange, size: 30),
                                               ),
                                               const SizedBox(width: 16),
                                               
@@ -286,7 +286,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                                     Text(
                                                       issue['title'] ?? 'Untitled Issue', 
                                                       style: const TextStyle(
-                                                        color: textDark, 
+                                                        color: textLight, 
                                                         fontWeight: FontWeight.bold,
                                                         fontSize: 16
                                                       ),

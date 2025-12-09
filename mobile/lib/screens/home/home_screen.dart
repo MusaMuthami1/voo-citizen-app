@@ -25,12 +25,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
 
-  // Theme colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color lightPink = Color(0xFFF5ADA7);
-  static const Color bgPink = Color(0xFFF9C5C1);
-  static const Color textDark = Color(0xFF333333);
-  static const Color textMuted = Color(0xFF666666);
+  // Theme colors - Dark Orange Theme
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color lightOrange = Color(0xFFFFB347);
+  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
 
   @override
   void initState() {
@@ -82,29 +82,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     ];
 
     return Scaffold(
+      backgroundColor: bgDark,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: screens[_currentIndex],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+          color: const Color(0xFF2A2A2A), // cardDark
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, -2))],
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (i) => setState(() => _currentIndex = i),
-          backgroundColor: Colors.white,
-          indicatorColor: primaryPink.withOpacity(0.15),
+          backgroundColor: const Color(0xFF2A2A2A), // cardDark
+          indicatorColor: primaryOrange,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           height: 70,
           animationDuration: const Duration(milliseconds: 400),
           destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined, color: textMuted), selectedIcon: Icon(Icons.home, color: primaryPink), label: 'Home'),
-            NavigationDestination(icon: Icon(Icons.list_alt_outlined, color: textMuted), selectedIcon: Icon(Icons.list_alt, color: primaryPink), label: 'Issues'),
-            NavigationDestination(icon: Icon(Icons.school_outlined, color: textMuted), selectedIcon: Icon(Icons.school, color: primaryPink), label: 'Bursary'),
-            NavigationDestination(icon: Icon(Icons.apps_outlined, color: textMuted), selectedIcon: Icon(Icons.apps, color: primaryPink), label: 'Services'),
-            NavigationDestination(icon: Icon(Icons.person_outline, color: textMuted), selectedIcon: Icon(Icons.person, color: primaryPink), label: 'Profile'),
+            NavigationDestination(icon: Icon(Icons.home_outlined, color: textMuted), selectedIcon: Icon(Icons.home, color: primaryOrange), label: 'Home'),
+            NavigationDestination(icon: Icon(Icons.list_alt_outlined, color: textMuted), selectedIcon: Icon(Icons.list_alt, color: primaryOrange), label: 'Issues'),
+            NavigationDestination(icon: Icon(Icons.school_outlined, color: textMuted), selectedIcon: Icon(Icons.school, color: primaryOrange), label: 'Bursary'),
+            NavigationDestination(icon: Icon(Icons.apps_outlined, color: textMuted), selectedIcon: Icon(Icons.apps, color: primaryOrange), label: 'Services'),
+            NavigationDestination(icon: Icon(Icons.person_outline, color: textMuted), selectedIcon: Icon(Icons.person, color: primaryOrange), label: 'Profile'),
           ],
         ),
       ),
@@ -112,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         scale: _fadeAnim,
         child: FloatingActionButton.extended(
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportIssueScreen())),
-          backgroundColor: primaryPink,
+          backgroundColor: primaryOrange,
           icon: const Icon(Icons.add_a_photo, color: Colors.white),
           label: const Text('Report Issue', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         ),
@@ -133,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           duration: const Duration(milliseconds: 500),
           width: size.width,
           height: size.height,
-          color: bgPink,
+          color: bgDark,
         ),
         
         // Animated decorative circles
@@ -147,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 1000),
             builder: (context, value, child) => Opacity(
               opacity: value.clamp(0.0, 1.0),
-              child: Transform.scale(scale: value, child: _buildCircle(160, primaryPink.withOpacity(0.4))),
+              child: Transform.scale(scale: value, child: _buildCircle(160, primaryOrange.withOpacity(0.4))),
             ),
           ),
         ),
@@ -161,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 1200),
             builder: (context, value, child) => Opacity(
               opacity: value.clamp(0.0, 1.0),
-              child: Transform.scale(scale: value, child: _buildCircle(120, lightPink.withOpacity(0.5))),
+              child: Transform.scale(scale: value, child: _buildCircle(120, lightOrange.withOpacity(0.5))),
             ),
           ),
         ),
@@ -169,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         SafeArea(
           child: RefreshIndicator(
             onRefresh: _refreshHome,
-            color: primaryPink,
+            color: primaryOrange,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.all(screenWidth * 0.05),
@@ -224,14 +225,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: const Color(0xFF2A2A2A), // cardDark
                           borderRadius: BorderRadius.circular(24),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 5))],
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 5))],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textDark)),
+                            const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textLight)),
                             const SizedBox(height: 16),
                             
                             GridView.count(
@@ -270,9 +271,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFF2A2A2A), // cardDark
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 5))],
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 5))],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,32 +281,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Announcements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textDark)),
+                                  const Text('Announcements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textLight)),
                                   TextButton(
                                     onPressed: () => setState(() => _currentIndex = 3),
-                                    child: const Text('View All', style: TextStyle(color: primaryPink, fontWeight: FontWeight.w500)),
+                                    child: const Text('View All', style: TextStyle(color: primaryOrange, fontWeight: FontWeight.w500)),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               
-                              if (recentAnnouncement != null)
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(16)),
+                                if (recentAnnouncement != null)
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(color: const Color(0xFF333333), borderRadius: BorderRadius.circular(16)),
                                   child: Row(
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(color: primaryPink.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                                        child: const Icon(Icons.campaign, color: primaryPink, size: 24),
+                                        decoration: BoxDecoration(color: primaryOrange.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                                        child: const Icon(Icons.campaign, color: primaryOrange, size: 24),
                                       ),
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(recentAnnouncement['title'] ?? 'New Announcement', style: const TextStyle(fontWeight: FontWeight.w600, color: textDark)),
+                                            Text(recentAnnouncement['title'] ?? 'New Announcement', style: const TextStyle(fontWeight: FontWeight.w600, color: textLight)),
                                             const SizedBox(height: 4),
                                             Text(recentAnnouncement['content'] ?? '', style: const TextStyle(color: textMuted, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
                                           ],
@@ -315,10 +316,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     ],
                                   ),
                                 )
-                              else
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(16)),
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(color: const Color(0xFF333333), borderRadius: BorderRadius.circular(16)),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -399,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     child: Icon(icon, size: 24, color: color),
                   ),
                   const SizedBox(height: 8),
-                  Text(label, style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.w500)),
+                  Text(label, style: TextStyle(color: textLight, fontSize: 12, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -414,8 +415,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     return Stack(
       children: [
-        Container(width: size.width, height: size.height, color: bgPink),
-        Positioned(top: -30, right: -40, child: _buildCircle(140, primaryPink.withOpacity(0.4))),
+        Container(width: size.width, height: size.height, color: bgDark),
+        Positioned(top: -30, right: -40, child: _buildCircle(140, primaryOrange.withOpacity(0.4))),
         
         SafeArea(
           child: Column(
@@ -452,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   children: [
                                     Container(
                                       width: 56, height: 56,
-                                      decoration: const BoxDecoration(color: primaryPink, shape: BoxShape.circle),
+                                      decoration: const BoxDecoration(color: primaryOrange, shape: BoxShape.circle),
                                       child: Center(
                                         child: Text(
                                           (user?['fullName'] ?? 'C')[0].toUpperCase(),
@@ -465,12 +466,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(user?['fullName'] ?? user?['email']?.split('@')[0] ?? 'User', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: textDark)),
+                                          Text(user?['fullName'] ?? user?['email']?.split('@')[0] ?? 'User', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: textLight)),
                                           Text(user?['phone'] ?? '', style: const TextStyle(color: textMuted, fontSize: 13)),
                                         ],
                                       ),
                                     ),
-                                    IconButton(onPressed: () => _showEditProfile(context), icon: const Icon(Icons.edit_outlined, color: primaryPink)),
+                                    IconButton(onPressed: () => _showEditProfile(context), icon: const Icon(Icons.edit_outlined, color: primaryOrange)),
                                   ],
                                 ),
                               ),
@@ -577,10 +578,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               leading: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: primaryPink.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: primaryPink, size: 22),
+                decoration: BoxDecoration(color: primaryOrange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: primaryOrange, size: 22),
               ),
-              title: Text(title, style: const TextStyle(color: textDark, fontSize: 15, fontWeight: FontWeight.w500)),
+              title: Text(title, style: const TextStyle(color: textLight, fontSize: 15, fontWeight: FontWeight.w500)),
               trailing: const Icon(Icons.chevron_right, color: textMuted),
               onTap: onTap,
             ),
@@ -606,12 +607,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               leading: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: primaryPink.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: primaryPink, size: 22),
+                decoration: BoxDecoration(color: primaryOrange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: primaryOrange, size: 22),
               ),
-              title: const Text('Appearance', style: TextStyle(color: textDark, fontSize: 15, fontWeight: FontWeight.w500)),
+              title: const Text('Appearance', style: TextStyle(color: textLight, fontSize: 15, fontWeight: FontWeight.w500)),
               subtitle: Text(themeProvider.isDarkMode ? 'Dark Mode' : 'Light Mode', style: const TextStyle(color: textMuted, fontSize: 12)),
-              trailing: Switch(value: themeProvider.isDarkMode, onChanged: (_) => themeProvider.toggleTheme(), activeColor: primaryPink),
+              trailing: Switch(value: themeProvider.isDarkMode, onChanged: (_) => themeProvider.toggleTheme(), activeColor: primaryOrange),
             ),
           ),
         ),
@@ -639,7 +640,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             children: [
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 20),
-              const Text('Edit Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textDark)),
+              const Text('Edit Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textLight)),
               const SizedBox(height: 24),
               _buildDialogField(nameController, 'Full Name', Icons.person_outline),
               const SizedBox(height: 16),
@@ -667,7 +668,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           );
                         }
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: primaryPink, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                      style: ElevatedButton.styleFrom(backgroundColor: primaryOrange, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                       child: isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
@@ -687,11 +688,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: textDark),
+        style: const TextStyle(color: textLight),
         decoration: InputDecoration(
           hintText: label,
           hintStyle: TextStyle(color: Colors.grey.shade400),
-          prefixIcon: Icon(icon, color: primaryPink, size: 22),
+          prefixIcon: Icon(icon, color: primaryOrange, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),
@@ -717,7 +718,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textDark)),
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textLight)),
             const SizedBox(height: 16),
             Text(content, style: const TextStyle(color: textMuted, height: 1.5)),
             const SizedBox(height: 24),
@@ -725,7 +726,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(backgroundColor: primaryPink, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                style: ElevatedButton.styleFrom(backgroundColor: primaryOrange, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                 child: const Text('Got it', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ),

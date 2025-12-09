@@ -28,20 +28,20 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   bool _isSubmitting = false;
   Position? _position;
 
-  // Theme colors
-  static const Color primaryPink = Color(0xFFE8847C);
-  static const Color bgPink = Color(0xFFF9C5C1);
-  static const Color textDark = Color(0xFF333333);
-  static const Color textMuted = Color(0xFF666666);
+  // Theme colors - Dark Orange Theme (matching mockups)
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color cardDark = Color(0xFF2A2A2A);
+  static const Color inputBg = Color(0xFF333333);
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
 
   final categories = [
-    'Damaged Roads',
-    'Water/Sanitation', 
-    'School Infrastructure', 
-    'Healthcare Facilities', 
-    'Security Concerns',
-    'Broken Streetlights',
-    'Women Empowerment',
+    'Roads',
+    'Water', 
+    'Electricity', 
+    'Waste Management', 
+    'Public Safety',
     'Other'
   ];
   
@@ -74,7 +74,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            const Text('Add Photo', style: TextStyle(color: textDark, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('Add Photo', style: TextStyle(color: textLight, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -101,13 +101,13 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: primaryPink.withOpacity(0.1),
+              color: primaryOrange.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: primaryPink, size: 30),
+            child: Icon(icon, color: primaryOrange, size: 30),
           ),
           const SizedBox(height: 12),
-          Text(label, style: const TextStyle(color: textDark, fontWeight: FontWeight.w500)),
+          Text(label, style: const TextStyle(color: textLight, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -200,14 +200,14 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgPink,
+      backgroundColor: bgDark,
       appBar: AppBar(
-        title: const Text('Report Issue', style: TextStyle(color: textDark, fontWeight: FontWeight.w700)),
-        backgroundColor: bgPink,
+        title: const Text('Report Issue', style: TextStyle(color: textLight, fontWeight: FontWeight.w700)),
+        backgroundColor: bgDark,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: textDark),
+          icon: const Icon(Icons.arrow_back_ios, color: textLight),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -220,7 +220,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text('Issue Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
+            const Text('Issue Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textLight)),
             const SizedBox(height: 24),
             
             // Category Dropdown
@@ -228,7 +228,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               value: _selectedCategory,
               dropdownColor: Colors.white,
               decoration: _inputDecoration('Category', Icons.category_outlined),
-              items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: textDark)))).toList(),
+              items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: textLight)))).toList(),
               onChanged: (v) => setState(() => _selectedCategory = v!),
             ),
             
@@ -237,7 +237,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               TextField(
                 controller: _specifyIssueController,
                 decoration: _inputDecoration('Specify Issue', Icons.edit_outlined),
-                style: const TextStyle(color: textDark),
+                style: const TextStyle(color: textLight),
               ),
             ],
 
@@ -247,7 +247,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             TextField(
               controller: _titleController,
               decoration: _inputDecoration('Title (e.g., Deep Pothole)', Icons.title),
-              style: const TextStyle(color: textDark),
+              style: const TextStyle(color: textLight),
             ),
 
             const SizedBox(height: 16),
@@ -257,11 +257,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               controller: _descriptionController,
               maxLines: 3,
               decoration: _inputDecoration('Description', Icons.description_outlined),
-              style: const TextStyle(color: textDark),
+              style: const TextStyle(color: textLight),
             ),
 
             const SizedBox(height: 24),
-            const Text('Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
+            const Text('Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textLight)),
             const SizedBox(height: 16),
 
             // Village Dropdown
@@ -269,7 +269,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               value: _selectedVillage,
               dropdownColor: Colors.white,
               decoration: _inputDecoration('Select Village', Icons.location_city),
-              items: _villages.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: textDark)))).toList(),
+              items: _villages.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: textLight)))).toList(),
               onChanged: (v) => setState(() => _selectedVillage = v),
             ),
 
@@ -278,7 +278,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               TextField(
                 onChanged: (v) => _customVillage = v,
                 decoration: _inputDecoration('Enter Village Name', Icons.add_home_work_outlined),
-                style: const TextStyle(color: textDark),
+                style: const TextStyle(color: textLight),
               ),
             ],
             
@@ -290,15 +290,15 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               readOnly: true,
               decoration: _inputDecoration('GPS Coordinates', Icons.gps_fixed).copyWith(
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.my_location, color: primaryPink),
+                  icon: const Icon(Icons.my_location, color: primaryOrange),
                   onPressed: _getLocation,
                 ),
               ),
-              style: const TextStyle(color: textDark),
+              style: const TextStyle(color: textLight),
             ),
 
             const SizedBox(height: 24),
-            const Text('Photos (Evidence)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
+            const Text('Photos (Evidence)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textLight)),
             const SizedBox(height: 16),
 
             // Image Picker
@@ -312,16 +312,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     child: Container(
                       width: 100,
                       decoration: BoxDecoration(
-                        color: primaryPink.withOpacity(0.1),
+                        color: primaryOrange.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: primaryPink.withOpacity(0.3), width: 1),
+                        border: Border.all(color: primaryOrange.withOpacity(0.3), width: 1),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_a_photo_outlined, color: primaryPink, size: 28),
+                          const Icon(Icons.add_a_photo_outlined, color: primaryOrange, size: 28),
                           const SizedBox(height: 4),
-                          Text('Add', style: TextStyle(color: primaryPink.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text('Add', style: TextStyle(color: primaryOrange.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -363,10 +363,10 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitIssue,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryPink,
+                  backgroundColor: primaryOrange,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 2,
-                  shadowColor: primaryPink.withOpacity(0.3),
+                  shadowColor: primaryOrange.withOpacity(0.3),
                 ),
                 child: _isSubmitting 
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -384,7 +384,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: textMuted),
-      prefixIcon: Icon(icon, color: primaryPink, size: 22),
+      prefixIcon: Icon(icon, color: primaryOrange, size: 22),
       filled: true,
       fillColor: const Color(0xFFF8F8F8),
       border: OutlineInputBorder(
@@ -397,7 +397,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primaryPink, width: 1.5),
+        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
