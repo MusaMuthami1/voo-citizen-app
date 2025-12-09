@@ -290,10 +290,11 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
-        style: const TextStyle(color: textLight, fontSize: 15),
+        cursorColor: primaryOrange,
+        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: textMuted, fontSize: 15),
+          hintStyle: TextStyle(color: textMuted.withOpacity(0.7), fontSize: 15),
           prefixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -301,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Icon(icon, color: primaryOrange, size: 20),
               if (prefix != null) ...[
                 const SizedBox(width: 8),
-                Text(prefix, style: const TextStyle(color: textLight, fontSize: 15)),
+                Text(prefix, style: const TextStyle(color: Colors.white, fontSize: 15)),
                 const SizedBox(width: 4),
               ],
             ],
