@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           animationDuration: const Duration(milliseconds: 400),
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home_outlined, color: textMuted), selectedIcon: Icon(Icons.home, color: primaryOrange), label: 'Home'),
-            NavigationDestination(icon: Icon(Icons.list_alt_outlined, color: textMuted), selectedIcon: Icon(Icons.list_alt, color: primaryOrange), label: 'Issues'),
+            NavigationDestination(icon: Icon(Icons.list_alt_outlined, color: textMuted), selectedIcon: Icon(Icons.list_alt, color: primaryOrange), label: 'My Reports'),
             NavigationDestination(icon: Icon(Icons.person_outline, color: textMuted), selectedIcon: Icon(Icons.person, color: primaryOrange), label: 'Profile'),
           ],
         ),
