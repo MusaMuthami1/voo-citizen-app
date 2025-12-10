@@ -65,16 +65,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   Future<void> _showImageSourceDialog() async {
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            const Text('Add Photo', style: TextStyle(color: textLight, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('Add Photo', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -210,118 +210,163 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           icon: const Icon(Icons.arrow_back_ios, color: textLight),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: textLight),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: Container(
         margin: const EdgeInsets.only(top: 10),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: Color(0xFF2A2A2A), // Dark theme
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text('Issue Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textLight)),
+            const Text('Issue Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
             
             // Category Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              dropdownColor: Colors.white,
-              decoration: _inputDecoration('Category', Icons.category_outlined),
-              items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: textLight)))).toList(),
-              onChanged: (v) => setState(() => _selectedCategory = v!),
+            _buildLabel('Category'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: _fieldDecoration(),
+              child: DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                dropdownColor: const Color(0xFF333333),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.category_outlined, color: primaryOrange, size: 22),
+                  border: InputBorder.none,
+                ),
+                items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: Colors.white)))).toList(),
+                onChanged: (v) => setState(() => _selectedCategory = v!),
+              ),
             ),
             
             if (_selectedCategory == 'Other') ...[
               const SizedBox(height: 16),
-              TextField(
-                controller: _specifyIssueController,
-                decoration: _inputDecoration('Specify Issue', Icons.edit_outlined),
-                style: const TextStyle(color: textLight),
+              _buildLabel('Specify Issue'),
+              Container(
+                decoration: _fieldDecoration(),
+                child: TextField(
+                  controller: _specifyIssueController,
+                  decoration: _inputDecoration('Specify here...', Icons.edit_outlined),
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             ],
 
             const SizedBox(height: 16),
 
             // Title
-            TextField(
-              controller: _titleController,
-              decoration: _inputDecoration('Title (e.g., Deep Pothole)', Icons.title),
-              style: const TextStyle(color: textLight),
+            _buildLabel('Title'),
+            Container(
+              decoration: _fieldDecoration(),
+              child: TextField(
+                controller: _titleController,
+                decoration: _inputDecoration('e.g., Deep Pothole', Icons.title),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
 
             const SizedBox(height: 16),
 
             // Description
-            TextField(
-              controller: _descriptionController,
-              maxLines: 3,
-              decoration: _inputDecoration('Description', Icons.description_outlined),
-              style: const TextStyle(color: textLight),
+            _buildLabel('Description'),
+            Container(
+              decoration: _fieldDecoration(),
+              child: TextField(
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: _inputDecoration('Describe the issue...', Icons.description_outlined).copyWith(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                ),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
 
             const SizedBox(height: 24),
-            const Text('Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textLight)),
+            const Text('Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 16),
 
             // Village Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedVillage,
-              dropdownColor: Colors.white,
-              decoration: _inputDecoration('Select Village', Icons.location_city),
-              items: _villages.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: textLight)))).toList(),
-              onChanged: (v) => setState(() => _selectedVillage = v),
+            _buildLabel('Select Village'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: _fieldDecoration(),
+              child: DropdownButtonFormField<String>(
+                value: _selectedVillage,
+                dropdownColor: const Color(0xFF333333),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.location_city, color: primaryOrange, size: 22),
+                  border: InputBorder.none,
+                ),
+                items: _villages.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(color: Colors.white)))).toList(),
+                onChanged: (v) => setState(() => _selectedVillage = v),
+              ),
             ),
 
             if (_selectedVillage == 'Other') ...[
               const SizedBox(height: 16),
-              TextField(
-                onChanged: (v) => _customVillage = v,
-                decoration: _inputDecoration('Enter Village Name', Icons.add_home_work_outlined),
-                style: const TextStyle(color: textLight),
+              _buildLabel('Village Name'),
+              Container(
+                decoration: _fieldDecoration(),
+                child: TextField(
+                  onChanged: (v) => _customVillage = v,
+                  decoration: _inputDecoration('Enter name...', Icons.add_home_work_outlined),
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             ],
             
             const SizedBox(height: 16),
             
             // GPS Location
-            TextField(
-              controller: _locationController,
-              readOnly: true,
-              decoration: _inputDecoration('GPS Coordinates', Icons.gps_fixed).copyWith(
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.my_location, color: primaryOrange),
-                  onPressed: _getLocation,
+            _buildLabel('GPS Coordinates'),
+            Container(
+              decoration: _fieldDecoration(),
+              child: TextField(
+                controller: _locationController,
+                readOnly: true,
+                decoration: _inputDecoration('Detecting...', Icons.gps_fixed).copyWith(
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.my_location, color: primaryOrange),
+                    onPressed: _getLocation,
+                  ),
+                  border: InputBorder.none,
                 ),
+                style: const TextStyle(color: Colors.white),
               ),
-              style: const TextStyle(color: textLight),
             ),
 
             const SizedBox(height: 24),
-            const Text('Photos (Evidence)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textLight)),
+            const Text('Photos (Evidence)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 16),
 
             // Image Picker
             SizedBox(
-              height: 100,
+              height: 110,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  GestureDetector(
+                   GestureDetector(
                     onTap: _showImageSourceDialog,
                     child: Container(
-                      width: 100,
+                      width: 110,
                       decoration: BoxDecoration(
-                        color: primaryOrange.withOpacity(0.1),
+                        color: const Color(0xFF1A1A1A),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: primaryOrange.withOpacity(0.3), width: 1),
+                        border: Border.all(color: primaryOrange, width: 1, style: BorderStyle.solid),
                       ),
-                      child: Column(
+                      child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_a_photo_outlined, color: primaryOrange, size: 28),
-                          const SizedBox(height: 4),
-                          Text('Add', style: TextStyle(color: primaryOrange.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold)),
+                          Icon(Icons.camera_alt_rounded, color: primaryOrange, size: 32),
+                          SizedBox(height: 8),
+                          Text('Add Photo', style: TextStyle(color: primaryOrange, fontSize: 12, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -329,10 +374,11 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   ..._images.map((img) => Stack(
                     children: [
                       Container(
-                        width: 100,
+                        width: 110,
                         margin: const EdgeInsets.only(left: 12),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade800),
                           image: DecorationImage(image: FileImage(img), fit: BoxFit.cover),
                         ),
                       ),
@@ -343,8 +389,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                           onTap: () => setState(() => _images.remove(img)),
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: const Icon(Icons.close, size: 14, color: Colors.red),
+                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, size: 16, color: Colors.white),
                           ),
                         ),
                       ),
@@ -365,12 +411,12 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryOrange,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 2,
-                  shadowColor: primaryOrange.withOpacity(0.3),
+                  elevation: 4,
+                  shadowColor: primaryOrange.withOpacity(0.4),
                 ),
                 child: _isSubmitting 
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    : const Text('Submit Issue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
             ),
             const SizedBox(height: 20),
@@ -380,26 +426,28 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon) {
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryOrange)),
+    );
+  }
+
+  BoxDecoration _fieldDecoration() {
+    return BoxDecoration(
+      color: const Color(0xFF1A1A1A),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xFF444444)),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: textMuted),
+      hintText: hint,
+      hintStyle: const TextStyle(color: textMuted),
       prefixIcon: Icon(icon, color: primaryOrange, size: 22),
-      filled: true,
-      fillColor: const Color(0xFFF8F8F8),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade200),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      border: InputBorder.none,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }

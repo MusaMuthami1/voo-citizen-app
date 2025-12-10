@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
-import '../../services/supabase_service.dart';
+import '../../services/dashboard_service.dart';
 import 'issue_details_screen.dart';
 
 class MyIssuesScreen extends StatefulWidget {
@@ -49,10 +49,10 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
       });
     }
 
-    // 2. Fetch fresh data
+    // 2. Fetch fresh data from Dashboard API (USSD Dashboard)
     try {
       if (await StorageService.isOnline()) {
-        final loadedIssues = await SupabaseService.getMyIssues(userId);
+        final loadedIssues = await DashboardService.getIssuesByUserId(userId);
         if (mounted) {
           setState(() {
             _issues = loadedIssues;
@@ -74,6 +74,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
       }
     }
   }
+
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -131,26 +132,41 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Reported Issues',
-                        style: TextStyle(
-                          fontSize: 28, 
-                          fontWeight: FontWeight.w800, 
-                          color: Colors.white,
-                          letterSpacing: -0.5
-                        ),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'My Issues',
+                            style: TextStyle(
+                              fontSize: 28, 
+                              fontWeight: FontWeight.w800, 
+                              color: Colors.white,
+                              letterSpacing: -0.5
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Track your reports', 
+                            style: TextStyle(color: textMuted, fontSize: 15)
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Track the status of your reports', 
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9), 
-                          fontSize: 15
-                        )
-                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {}, 
+                            icon: const Icon(Icons.search, color: Colors.white, size: 28)
+                          ),
+                          Container(
+                            width: 36, height: 36,
+                            decoration: const BoxDecoration(color: Color(0xFF333333), shape: BoxShape.circle),
+                            child: const Icon(Icons.person, color: primaryOrange, size: 20),
+                          ),
+                        ],
+                      )
                     ],
                   ),
                 ),
@@ -159,7 +175,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                   child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF2A2A2A), // card cardDark
+                      color: Color(0xFF2A2A2A),
                       borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                     ),
                     child: _isLoading
@@ -169,30 +185,13 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: bgDark.withOpacity(0.3),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(Icons.assignment_outlined, size: 60, color: primaryOrange.withOpacity(0.6)),
-                                    ),
+                                    Icon(Icons.inventory_2_outlined, size: 60, color: textMuted.withOpacity(0.5)),
                                     const SizedBox(height: 16),
-                                    const Text(
-                                      'No issues reported yet', 
-                                      style: TextStyle(
-                                        color: textMuted, 
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16
-                                      )
-                                    ),
+                                    const Text('No Issues Found', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                                     const SizedBox(height: 8),
-                                    const Text(
-                                      'Reports you submit will appear here', 
-                                      style: TextStyle(
-                                        color: textMuted, 
-                                        fontSize: 14
-                                      )
+                                    GestureDetector(
+                                      onTap: () => Navigator.pop(context), // Go back to create
+                                      child: const Text('Create New Issue', style: TextStyle(color: primaryOrange, fontWeight: FontWeight.w600, fontSize: 16)),
                                     ),
                                   ],
                                 ),
@@ -206,7 +205,10 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                   itemBuilder: (ctx, i) {
                                     final issue = _issues[i];
                                     final status = issue['status'] ?? 'pending';
-                                    final statusColor = _getStatusColor(status);
+                                    final category = issue['category'] ?? 'General';
+                                    final date = issue['createdAt'] != null 
+                                        ? DateTime.parse(issue['createdAt']).toString().substring(0, 10) 
+                                        : 'Oct 26, 2023';
                                     
                                     return GestureDetector(
                                       onTap: () {
@@ -221,40 +223,28 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                         margin: const EdgeInsets.only(bottom: 16),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF333333),
-                                          borderRadius: BorderRadius.circular(20),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.2),
-                                              blurRadius: 15,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
+                                          borderRadius: BorderRadius.circular(16),
                                         ),
                                         child: Padding(
-                                          padding: const EdgeInsets.all(16),
+                                          padding: const EdgeInsets.all(12),
                                           child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              // Image or Icon
+                                              // Image
                                               Container(
-                                                width: 70,
-                                                height: 70,
+                                                width: 80, height: 80,
                                                 decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(16),
-                                                  color: bgDark.withOpacity(0.3),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  color: bgDark,
                                                   image: issue['images']?.isNotEmpty == true
-                                                      ? DecorationImage(
-                                                          image: NetworkImage(issue['images'][0]),
-                                                          fit: BoxFit.cover,
-                                                        )
+                                                      ? DecorationImage(image: NetworkImage(issue['images'][0]), fit: BoxFit.cover)
                                                       : null,
                                                 ),
-                                                child: issue['images']?.isNotEmpty == true
-                                                    ? null
-                                                    : const Icon(Icons.image_outlined, color: primaryOrange, size: 30),
+                                                child: issue['images']?.isNotEmpty == true ? null : const Icon(Icons.broken_image, color: textMuted),
                                               ),
-                                              const SizedBox(width: 16),
+                                              const SizedBox(width: 12),
                                               
-                                              // Content
+                                              // Details
                                               Expanded(
                                                 child: Column(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,53 +253,33 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                       children: [
                                                         Container(
-                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                                           decoration: BoxDecoration(
-                                                            color: statusColor.withOpacity(0.1),
-                                                            borderRadius: BorderRadius.circular(8),
+                                                            color: Colors.blue.withOpacity(0.2),
+                                                            borderRadius: BorderRadius.circular(4),
                                                           ),
-                                                          child: Text(
-                                                            _getStatusLabel(status),
-                                                            style: TextStyle(
-                                                              color: statusColor, 
-                                                              fontSize: 10, 
-                                                              fontWeight: FontWeight.bold,
-                                                              letterSpacing: 0.5
-                                                            ),
-                                                          ),
+                                                          child: Text(category, style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold)),
                                                         ),
-                                                        
-                                                        const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFD1D5DB)),
+                                                        Text(date, style: const TextStyle(color: textMuted, fontSize: 12)),
                                                       ],
                                                     ),
                                                     const SizedBox(height: 8),
                                                     Text(
-                                                      issue['title'] ?? 'Untitled Issue', 
-                                                      style: const TextStyle(
-                                                        color: textLight, 
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 16
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
+                                                      issue['title'] ?? 'Untitled',
+                                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                                      maxLines: 1, overflow: TextOverflow.ellipsis,
                                                     ),
-                                                    const SizedBox(height: 4),
-                                                    Row(
-                                                      children: [
-                                                        Icon(Icons.location_on_outlined, size: 14, color: textMuted.withOpacity(0.7)),
-                                                        const SizedBox(width: 4),
-                                                        Expanded(
-                                                          child: Text(
-                                                            issue['location'] ?? 'Unknown Location', 
-                                                            style: const TextStyle(
-                                                              color: textMuted, 
-                                                              fontSize: 13
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                      ],
+                                                    const SizedBox(height: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                      decoration: BoxDecoration(
+                                                        color: _getStatusColor(status).withOpacity(0.2),
+                                                        borderRadius: BorderRadius.circular(20),
+                                                      ),
+                                                      child: Text(
+                                                        _getStatusLabel(status),
+                                                        style: TextStyle(color: _getStatusColor(status), fontSize: 11, fontWeight: FontWeight.w600),
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
@@ -324,6 +294,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                               ),
                   ),
                 ),
+
               ],
             ),
           ),

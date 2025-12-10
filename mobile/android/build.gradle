@@ -27,7 +27,7 @@ subprojects {
 
 subprojects {
     project.pluginManager.withPlugin("com.android.library") {
-        android.compileSdkVersion 34
+        project.android.compileSdkVersion 34
     }
 }
 

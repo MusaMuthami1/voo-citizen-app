@@ -1,23 +1,26 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'supabase_service.dart';
 
 /// Service to check for app updates and FORCE users to update
 class AppUpdateService {
   // Current app version - UPDATE THIS when releasing new versions
-  static const String currentVersion = '7.0.0';
-  static const int currentVersionCode = 70;
+  static const String currentVersion = '9.5.0';
+  static const int currentVersionCode = 95;
   
   // GitHub releases URL
-  static const String githubReleasesUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases/latest';
-  static const String directDownloadUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases/download/v7.0/VOO-Citizen-App-v7.0.apk';
+  static const String githubReleasesUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases';
+  static const String directDownloadUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases/download/v8.0.0/app-release.apk';
 
   /// Check if an update is required
   static Future<Map<String, dynamic>> checkForUpdate() async {
     try {
-      // Fetch minimum required version from Supabase
       final url = '${SupabaseService.supabaseUrl}/rest/v1/app_config?key=eq.min_version&select=value';
       final response = await http.get(
         Uri.parse(url),
@@ -33,7 +36,6 @@ class AppUpdateService {
           final minVersion = data[0]['value'];
           final isUpdateRequired = _compareVersions(currentVersion, minVersion) < 0;
           
-          // Get download URL from config or use default
           String downloadUrl = directDownloadUrl;
           try {
             final urlResponse = await http.get(
@@ -60,228 +62,241 @@ class AppUpdateService {
         }
       }
 
-      // If we can't check, assume no update needed
       return {'updateRequired': false, 'currentVersion': currentVersion};
     } catch (e) {
-      // On error, don't block the user
       return {'updateRequired': false, 'currentVersion': currentVersion, 'error': e.toString()};
     }
   }
 
-  /// Compare version strings (e.g., "1.0.0" vs "7.0.0")
+  /// Compare version strings
   static int _compareVersions(String v1, String v2) {
-    final parts1 = v1.split('.').map(int.parse).toList();
-    final parts2 = v2.split('.').map(int.parse).toList();
-
+    final parts1 = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final parts2 = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    
     for (int i = 0; i < 3; i++) {
       final p1 = i < parts1.length ? parts1[i] : 0;
       final p2 = i < parts2.length ? parts2[i] : 0;
-      if (p1 != p2) return p1 - p2;
+      if (p1 < p2) return -1;
+      if (p1 > p2) return 1;
     }
     return 0;
   }
 
-  /// Show MANDATORY full-screen blocking update overlay
-  /// User CANNOT dismiss this - must update to continue
+  /// Show update overlay with circular progress
   static void showMandatoryUpdateOverlay(BuildContext context, {String? downloadUrl}) {
     final url = downloadUrl ?? directDownloadUrl;
     
     showDialog(
       context: context,
-      barrierDismissible: false, // CANNOT dismiss by tapping outside
+      barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.95),
       builder: (ctx) => WillPopScope(
-        onWillPop: () async => false, // CANNOT use back button
-        child: Scaffold(
-          backgroundColor: const Color(0xFF1A1A1A),
-          body: SafeArea(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Update icon with animation
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF8C00).withOpacity(0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFFF8C00), width: 3),
-                      ),
-                      child: const Icon(
-                        Icons.system_update,
-                        color: Color(0xFFFF8C00),
-                        size: 50,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    const Text(
-                      'Update Required',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    Text(
-                      'A new version of VOO Citizen App is available.\nPlease update to continue using the app.',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Version info box
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF444444)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.info_outline, color: Color(0xFFFF8C00), size: 24),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Your version: v$currentVersion',
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 48),
-                    
-                    // Update button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _openDownloadUrl(ctx, url),
-                        icon: const Icon(Icons.download, color: Colors.black, size: 24),
-                        label: const Text(
-                          'UPDATE NOW',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF8C00),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Alternative: Open in browser
-                    TextButton.icon(
-                      onPressed: () => _openInBrowser(url),
-                      icon: Icon(Icons.open_in_browser, color: Colors.white.withOpacity(0.6)),
-                      label: Text(
-                        'Open in Browser',
-                        style: TextStyle(color: Colors.white.withOpacity(0.6)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+        onWillPop: () async => false,
+        child: _UpdateDownloadScreen(downloadUrl: url),
       ),
     );
   }
+}
 
-  /// Open download URL
-  static Future<void> _openDownloadUrl(BuildContext context, String url) async {
+/// Update download screen with circular progress indicator
+class _UpdateDownloadScreen extends StatefulWidget {
+  final String downloadUrl;
+  const _UpdateDownloadScreen({required this.downloadUrl});
+
+  @override
+  State<_UpdateDownloadScreen> createState() => _UpdateDownloadScreenState();
+}
+
+class _UpdateDownloadScreenState extends State<_UpdateDownloadScreen> {
+  bool _isDownloading = false;
+  double _progress = 0.0;
+  String _status = 'New version available!';
+  String? _downloadedFilePath;
+  final Dio _dio = Dio();
+  CancelToken? _cancelToken;
+
+  @override
+  void dispose() {
+    _cancelToken?.cancel();
+    super.dispose();
+  }
+
+  void _startDownload() async {
+    if (_downloadedFilePath != null) {
+      // APK already downloaded, open it
+      await OpenFilex.open(_downloadedFilePath!);
+      return;
+    }
+
+    setState(() {
+      _isDownloading = true;
+      _status = 'Downloading update...';
+      _progress = 0.0;
+    });
+
     try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        _showCopyUrlSnackBar(context, url);
+      // Get download directory
+      final dir = await getExternalStorageDirectory();
+      final savePath = '${dir!.path}/voo_update.apk';
+      
+      _cancelToken = CancelToken();
+
+      // Download APK with progress
+      await _dio.download(
+        widget.downloadUrl,
+        savePath,
+        cancelToken: _cancelToken,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            final progress = received / total;
+            if (mounted) {
+              setState(() => _progress = progress);
+            }
+          }
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _downloadedFilePath = savePath;
+          _status = 'Download complete! Tap to install';
+          _progress = 1.0;
+        });
+        
+        // Auto-trigger install
+        await OpenFilex.open(savePath);
       }
     } catch (e) {
-      _showCopyUrlSnackBar(context, url);
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _status = 'Download failed. Tap to retry';
+          _progress = 0.0;
+        });
+      }
     }
   }
 
-  /// Open releases page in browser
-  static Future<void> _openInBrowser(String url) async {
-    try {
-      final uri = Uri.parse(githubReleasesUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {}
-  }
-
-  /// Show snackbar with copy option
-  static void _showCopyUrlSnackBar(BuildContext context, String url) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Download the update from GitHub Releases'),
-        duration: const Duration(seconds: 10),
-        action: SnackBarAction(
-          label: 'Open',
-          onPressed: () => _openInBrowser(url),
-        ),
-      ),
-    );
-  }
-
-  /// Non-blocking update dialog (for minor updates)
-  static void showOptionalUpdateDialog(BuildContext context, String downloadUrl) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.system_update, color: Color(0xFFFF8C00), size: 28),
-            SizedBox(width: 8),
-            Text('Update Available', style: TextStyle(color: Colors.white)),
-          ],
-        ),
-        content: Text(
-          'A new version is available. Update for the best experience!',
-          style: TextStyle(color: Colors.white.withOpacity(0.8)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Later', style: TextStyle(color: Colors.white.withOpacity(0.6))),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A1A1A),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Circular Progress Indicator
+                SizedBox(
+                  width: 180,
+                  height: 180,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Background circle
+                      SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: CircularProgressIndicator(
+                          value: 1.0,
+                          strokeWidth: 8,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            const Color(0xFFFF8C00).withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                      // Progress circle
+                      SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: CircularProgressIndicator(
+                          value: _isDownloading ? _progress : 0.0,
+                          strokeWidth: 8,
+                          backgroundColor: Colors.transparent,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFFF8C00),
+                          ),
+                        ),
+                      ),
+                      // Percentage text
+                      Text(
+                        '${(_progress * 100).toInt()}%',
+                        style: const TextStyle(
+                          color: Color(0xFFFF8C00),
+                          fontSize: 42,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Status text
+                Text(
+                  _status,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 16,
+                  ),
+                ),
+                
+                const SizedBox(height: 48),
+                
+                // Download/Next button
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _startDownload,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF8C00),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      _progress >= 1.0 ? 'next' : 'Download Now',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                
+                if (!_isDownloading) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () => SystemNavigator.pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'Later',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _openDownloadUrl(ctx, downloadUrl);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8C00)),
-            child: const Text('Update', style: TextStyle(color: Colors.black)),
-          ),
-        ],
+        ),
       ),
     );
   }

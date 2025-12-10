@@ -155,7 +155,7 @@ class DashboardService {
 
   // ============ ISSUES ============
   
-  /// Get user's issues
+  /// Get user's issues (requires auth)
   static Future<List<Map<String, dynamic>>> getMyIssues() async {
     try {
       final res = await http.get(
@@ -172,6 +172,29 @@ class DashboardService {
       return [];
     } catch (e) {
       print('Get issues error: $e');
+      return [];
+    }
+  }
+
+  /// Get issues by user ID (PUBLIC - for mobile app)
+  static Future<List<Map<String, dynamic>>> getIssuesByUserId(String userId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$apiBase/mobile/issues/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true && data['issues'] is List) {
+          return List<Map<String, dynamic>>.from(data['issues']);
+        } else if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Get issues by userId error: $e');
       return [];
     }
   }

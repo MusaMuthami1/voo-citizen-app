@@ -320,7 +320,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(app['applicationNumber'] ?? '#${i + 1}', style: const TextStyle(color: primaryOrange, fontWeight: FontWeight.w600)),
+                    Text(app['applicationNumber'] ?? app['ref_code'] ?? '#${i + 1}', style: const TextStyle(color: primaryOrange, fontWeight: FontWeight.w600)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -332,7 +332,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(app['institutionName'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textLight)),
+                Text(app['institutionName'] ?? app['institution'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textLight)),
                 const SizedBox(height: 4),
                 Text(app['course'] ?? '', style: TextStyle(color: textMuted)),
                 if (status == 'approved') ...[
@@ -348,7 +348,47 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                       children: [
                         const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 16),
                         const SizedBox(width: 6),
-                        Text('Approved: KES ${app['amountApproved'] ?? 0}', style: const TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('Approved: KES ${app['amount_approved'] ?? app['amountApproved'] ?? app['amountRequested'] ?? 0}', style: const TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.w600, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                ],
+                if (status == 'rejected') ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.cancel, color: Color(0xFFEF4444), size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(app['admin_notes'] ?? 'Application was not approved', style: const TextStyle(color: Color(0xFFEF4444), fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                // Show admin notes if available (for any status)
+                if (app['admin_notes'] != null && app['admin_notes'].toString().isNotEmpty && status != 'rejected') ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primaryOrange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline, color: primaryOrange, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(app['admin_notes'], style: const TextStyle(color: textLight, fontSize: 12)),
+                        ),
                       ],
                     ),
                   ),
@@ -364,25 +404,43 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
   Widget _buildApplicationForm() {
     return Column(
       children: [
-        // Progress bar
+        // Numbered Step Indicator
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Row(
-            children: List.generate(4, (i) => Expanded(
-              child: Container(
-                height: 4,
-                margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: i <= _currentStep ? primaryOrange : Colors.grey.shade200,
-                ),
-              ),
-            )),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(4, (i) {
+              final isActive = i <= _currentStep;
+              return Row(
+                children: [
+                  Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(
+                      color: isActive ? primaryOrange : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: isActive ? primaryOrange : Colors.grey.shade700, width: 2),
+                    ),
+                    child: Center(
+                      child: isActive 
+                          ? const Icon(Icons.check, color: Colors.white, size: 16)
+                          : Text('${i + 1}', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  if (i < 3)
+                    Container(
+                      width: 40, height: 2,
+                      color: i < _currentStep ? primaryOrange : Colors.grey.shade800,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                ],
+              );
+            }),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: Text(['Institution', 'Financial', 'Guardian', 'Reason'][_currentStep], style: TextStyle(color: textMuted, fontSize: 13)),
+          child: Text(['Applicant Details', 'Financial Info', 'Guardian Details', 'Reason'][_currentStep], 
+            style: const TextStyle(color: primaryOrange, fontSize: 16, fontWeight: FontWeight.w600)),
         ),
         
         Expanded(
@@ -420,7 +478,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text(_currentStep < 3 ? 'Next' : (_isSubmitting ? 'Submitting...' : 'Submit'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text(_currentStep < 3 ? 'Continue' : (_isSubmitting ? 'Submitting...' : 'Submit Amount'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -524,14 +582,14 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
         _buildLabel('Why do you need this bursary?'),
         Container(
           decoration: BoxDecoration(
-            color: inputBg,
+            color: const Color(0xFF1A1A1A), // Dark black
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.grey.shade800),
           ),
           child: TextField(
             controller: _reasonController,
             maxLines: 6,
-            style: const TextStyle(color: textLight),
+            style: const TextStyle(color: Colors.white), // White text
             decoration: InputDecoration(
               hintText: 'Explain your situation...',
               hintStyle: TextStyle(color: Colors.grey.shade600),
@@ -571,14 +629,14 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
   Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType}) {
     return Container(
       decoration: BoxDecoration(
-        color: inputBg,
+        color: const Color(0xFF1A1A1A), // Dark black
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade800),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: textLight),
+        style: const TextStyle(color: Colors.white), // White text
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade600),
@@ -594,7 +652,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: inputBg,
+        color: const Color(0xFF1A1A1A), // Dark black
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade800),
       ),
@@ -626,7 +684,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
             margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: _institutionType == types[i] ? primaryOrange : inputBg,
+              color: _institutionType == types[i] ? primaryOrange : const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: _institutionType == types[i] ? primaryOrange : Colors.grey.shade800),
             ),
@@ -649,7 +707,7 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: inputBg,
+        color: const Color(0xFF1A1A1A), // Dark black
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

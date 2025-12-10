@@ -594,7 +594,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildInputField(TextEditingController controller, String hint, TextInputType type, {String? prefix}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF333333),
+        color: const Color(0xFF1A1A1A), // Dark black
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF555555), width: 1),
       ),
@@ -628,7 +628,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildPasswordField(TextEditingController controller, String hint) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF333333),
+        color: const Color(0xFF1A1A1A), // Dark black
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: primaryOrange, width: 1.5),
       ),

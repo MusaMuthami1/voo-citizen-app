@@ -149,26 +149,68 @@ class IssueDetailsScreen extends StatelessWidget {
               _buildTimelineItem(
                 'Report Received',
                 'Your issue has been logged successfully.',
-                '2023-10-25 09:30 AM',
+                _formatDateTime(issue['created_at']),
                 true,
-                isLast: status == 'pending',
+                isLast: status == 'pending' || status == 'open',
               ),
               _buildTimelineItem(
-                'Team Assigned',
-                'Maintenance team dispatched for assessment.',
-                '2023-10-26 10:00 AM',
+                'In Progress',
+                issue['action_note'] ?? 'Maintenance team dispatched for assessment.',
+                status == 'in_progress' || status == 'resolved' 
+                    ? _formatDateTime(issue['action_at'] ?? issue['updated_at']) 
+                    : 'Pending',
                 status == 'in_progress' || status == 'resolved',
                 isLast: status == 'in_progress',
-                showTeam: true,
+                showTeam: status == 'in_progress' || status == 'resolved',
+                teamName: issue['action_by'],
               ),
               _buildTimelineItem(
                 'Issue Resolved',
-                'Repair works completed and verified.',
-                '2023-10-28 04:15 PM',
+                issue['action_note'] ?? 'Repair works completed and verified.',
+                status == 'resolved' 
+                    ? _formatDateTime(issue['action_at'] ?? issue['updated_at']) 
+                    : 'Pending',
                 status == 'resolved',
                 isLast: true,
                 isCompleted: status == 'resolved',
               ),
+              
+              // Show Resolution Notes if available and resolved
+              if (status == 'resolved' && issue['action_note'] != null) ...[
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+                          SizedBox(width: 8),
+                          Text('Resolution Notes', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        issue['action_note'],
+                        style: const TextStyle(color: textMuted, height: 1.5),
+                      ),
+                      if (issue['action_by'] != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Resolved by: ${issue['action_by']}',
+                          style: TextStyle(color: textMuted.withOpacity(0.7), fontSize: 12),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
               
               const SizedBox(height: 40),
             ],
@@ -176,6 +218,27 @@ class IssueDetailsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  String _formatDateTime(dynamic dateValue) {
+    if (dateValue == null) return 'Unknown';
+    try {
+      DateTime date;
+      if (dateValue is String) {
+        date = DateTime.parse(dateValue);
+      } else if (dateValue is DateTime) {
+        date = dateValue;
+      } else {
+        return 'Unknown';
+      }
+      
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+      final ampm = date.hour >= 12 ? 'PM' : 'AM';
+      return '${months[date.month - 1]} ${date.day}, ${date.year} ${hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} $ampm';
+    } catch (e) {
+      return dateValue.toString();
+    }
   }
 
   Color _getStatusColor(String status) {
@@ -186,7 +249,7 @@ class IssueDetailsScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildTimelineItem(String title, String desc, String time, bool isActive, {bool isLast = false, bool isCompleted = false, bool showTeam = false}) {
+  Widget _buildTimelineItem(String title, String desc, String time, bool isActive, {bool isLast = false, bool isCompleted = false, bool showTeam = false, String? teamName}) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,12 +315,12 @@ class IssueDetailsScreen extends StatelessWidget {
                             child: const Icon(Icons.people, color: textMuted),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Assigned Team', style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 13)),
-                                Text('Roads & Infrastructure Unit', style: TextStyle(color: textMuted, fontSize: 12)),
+                                const Text('Assigned Team', style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text(teamName ?? 'Ward Services Team', style: const TextStyle(color: textMuted, fontSize: 12)),
                               ],
                             ),
                           ),

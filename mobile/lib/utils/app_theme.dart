@@ -12,7 +12,7 @@ class AppTheme {
   
   // Surface colors
   static const Color cardDark = Color(0xFF2A2A2A);
-  static const Color inputBg = Color(0xFF333333);
+  static const Color inputBg = Color(0xFF1A1A1A); // Dark black input
   static const Color divider = Color(0xFF444444);
   
   // Text colors
@@ -128,9 +128,21 @@ class AppTheme {
     outlinedButtonTheme: OutlinedButtonThemeData(style: outlineButton),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: inputBg,
+      fillColor: bgDark, // Dark black input background
       hintStyle: const TextStyle(color: textMuted),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: divider)),
+      labelStyle: const TextStyle(color: textLight),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14), 
+        borderSide: const BorderSide(color: divider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14), 
+        borderSide: const BorderSide(color: divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14), 
+        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
+      ),
     ),
     cardTheme: CardTheme(
       color: cardDark,
@@ -155,5 +167,11 @@ class AppTheme {
     ),
     fontFamily: 'Roboto',
     useMaterial3: true,
+    // Input cursor and text selection colors
+    textSelectionTheme: const TextSelectionThemeData(
+      cursorColor: Color(0xFFFFCC00), // Yellow cursor
+      selectionColor: Color(0x40FF8C00),
+      selectionHandleColor: primaryOrange,
+    ),
   );
 }

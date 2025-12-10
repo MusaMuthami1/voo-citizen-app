@@ -76,8 +76,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final screens = [
       _buildHomeTab(user, screenWidth),
       const MyIssuesScreen(),
-      const BursaryScreen(),
-      const ServicesScreen(),
       _buildProfileTab(auth, user),
     ];
 
@@ -96,15 +94,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           selectedIndex: _currentIndex,
           onDestinationSelected: (i) => setState(() => _currentIndex = i),
           backgroundColor: const Color(0xFF2A2A2A), // cardDark
-          indicatorColor: primaryOrange,
+          indicatorColor: Colors.transparent, // Remove indicator block
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           height: 70,
           animationDuration: const Duration(milliseconds: 400),
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home_outlined, color: textMuted), selectedIcon: Icon(Icons.home, color: primaryOrange), label: 'Home'),
             NavigationDestination(icon: Icon(Icons.list_alt_outlined, color: textMuted), selectedIcon: Icon(Icons.list_alt, color: primaryOrange), label: 'Issues'),
-            NavigationDestination(icon: Icon(Icons.school_outlined, color: textMuted), selectedIcon: Icon(Icons.school, color: primaryOrange), label: 'Bursary'),
-            NavigationDestination(icon: Icon(Icons.apps_outlined, color: textMuted), selectedIcon: Icon(Icons.apps, color: primaryOrange), label: 'Services'),
             NavigationDestination(icon: Icon(Icons.person_outline, color: textMuted), selectedIcon: Icon(Icons.person, color: primaryOrange), label: 'Profile'),
           ],
         ),
@@ -238,19 +234,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             GridView.count(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              crossAxisCount: 3,
+                              crossAxisCount: 2,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
-                              childAspectRatio: 0.9,
+                              childAspectRatio: 1.3,
                               children: [
-                                _buildQuickAction(Icons.school, 'Bursary', const Color(0xFF9333EA), screenWidth, isBursary: true, delay: 0),
-                                _buildQuickAction(Icons.add_road, 'Roads', const Color(0xFFF97316), screenWidth, category: 'Damaged Roads', delay: 100),
-                                _buildQuickAction(Icons.water_drop, 'Water', const Color(0xFF0EA5E9), screenWidth, category: 'Water/Sanitation', delay: 200),
-                                _buildQuickAction(Icons.menu_book, 'Education', const Color(0xFF14B8A6), screenWidth, category: 'School Infrastructure', delay: 300),
-                                _buildQuickAction(Icons.woman, 'Women', const Color(0xFFEC4899), screenWidth, category: 'Women Empowerment', delay: 400),
-                                _buildQuickAction(Icons.more_horiz, 'Other', const Color(0xFF6B7280), screenWidth, category: 'Other', delay: 500),
+                                _buildQuickAction(Icons.report_problem_outlined, 'Report Issue', primaryOrange, screenWidth, isReport: true, delay: 0),
+                                _buildQuickAction(Icons.list_alt, 'My Issues', const Color(0xFF0EA5E9), screenWidth, isMyIssues: true, delay: 100),
+                                _buildQuickAction(Icons.school, 'Bursary', const Color(0xFF9333EA), screenWidth, isBursary: true, delay: 200),
+                                _buildQuickAction(Icons.apps, 'Services', const Color(0xFF14B8A6), screenWidth, isServices: true, delay: 300),
                               ],
                             ),
+
                           ],
                         ),
                       ),
@@ -259,81 +254,120 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                   const SizedBox(height: 24),
                   
-                  // Animated Announcements section
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 800),
-                    curve: Curves.easeOut,
-                    builder: (context, value, child) => Opacity(
-                      opacity: value.clamp(0.0, 1.0),
-                      child: Transform.translate(
-                        offset: Offset(0, 20 * (1 - value)),
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2A2A2A), // cardDark
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 5))],
+                  // Announcements Section
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('Announcements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  SizedBox(
+                    height: 200,
+                    child: announcements.isEmpty 
+                      ? Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(16)),
+                            child: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.notifications_none, color: textMuted, size: 30),
+                                SizedBox(height: 8),
+                                Text('No announcements yet', style: TextStyle(color: textMuted)),
+                              ],
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Announcements', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textLight)),
-                                  TextButton(
-                                    onPressed: () => setState(() => _currentIndex = 3),
-                                    child: const Text('View All', style: TextStyle(color: primaryOrange, fontWeight: FontWeight.w500)),
-                                  ),
-                                ],
+                        )
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: announcements.length,
+                          itemBuilder: (context, index) {
+                            final announcement = announcements[index];
+                            final date = announcement['created_at'] != null 
+                                ? DateTime.parse(announcement['created_at']) 
+                                : DateTime.now();
+                            final dateStr = '${date.day} ${_getMonth(date.month)}';
+                            
+                            return Container(
+                              width: 280,
+                              margin: const EdgeInsets.only(right: 16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white.withOpacity(0.05)),
                               ),
-                              const SizedBox(height: 8),
-                              
-                                if (recentAnnouncement != null)
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(color: const Color(0xFF333333), borderRadius: BorderRadius.circular(16)),
-                                  child: Row(
+                              child: Stack(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
+                                      // Image area
                                       Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(color: primaryOrange.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                                        child: const Icon(Icons.campaign, color: primaryOrange, size: 24),
+                                        height: 110,
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                          color: bgDark,
+                                          image: announcement['image_url'] != null
+                                              ? DecorationImage(
+                                                  image: NetworkImage(announcement['image_url']),
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
+                                        ),
+                                        child: announcement['image_url'] == null 
+                                            ? Center(child: Icon(Icons.campaign_outlined, size: 40, color: primaryOrange.withOpacity(0.5)))
+                                            : null,
                                       ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
+                                      
+                                      // Content
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(recentAnnouncement['title'] ?? 'New Announcement', style: const TextStyle(fontWeight: FontWeight.w600, color: textLight)),
+                                            Text(
+                                              announcement['title'] ?? 'Announcement',
+                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                             const SizedBox(height: 4),
-                                            Text(recentAnnouncement['content'] ?? '', style: const TextStyle(color: textMuted, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                            Text(
+                                              announcement['content'] ?? '',
+                                              style: const TextStyle(color: textMuted, fontSize: 13),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ],
                                         ),
                                       ),
-                                      const Icon(Icons.arrow_forward_ios, size: 16, color: textMuted),
                                     ],
                                   ),
-                                )
-                                else
-                                  Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(color: const Color(0xFF333333), borderRadius: BorderRadius.circular(16)),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.notifications_off_outlined, color: textMuted.withOpacity(0.5)),
-                                      const SizedBox(width: 10),
-                                      Text('No announcements. Pull to refresh.', style: TextStyle(color: textMuted.withOpacity(0.7))),
-                                    ],
+                                  
+                                  // Date Badge
+                                  Positioned(
+                                    top: 12,
+                                    right: 12,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: primaryOrange.withOpacity(0.5)),
+                                      ),
+                                      child: Text(
+                                        dateStr,
+                                        style: const TextStyle(color: primaryOrange, fontWeight: FontWeight.bold, fontSize: 12),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                            ],
-                          ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    ),
                   ),
                   
                   const SizedBox(height: 100),
@@ -368,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildQuickAction(IconData icon, String label, Color color, double screenWidth, 
-      {String? category, bool autoPick = false, bool isBursary = false, int delay = 0}) {
+      {String? category, bool autoPick = false, bool isBursary = false, bool isReport = false, bool isMyIssues = false, bool isServices = false, int delay = 0}) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: Duration(milliseconds: 400 + delay),
@@ -376,11 +410,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       builder: (context, value, child) => Transform.scale(
         scale: value,
         child: Opacity(
-          opacity: value.clamp(0.0, 1.0),  // Clamp to avoid assertion error with easeOutBack
+          opacity: value.clamp(0.0, 1.0),
           child: GestureDetector(
             onTap: () {
               if (isBursary) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BursaryScreen()));
+              } else if (isReport) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportIssueScreen()));
+              } else if (isMyIssues) {
+                setState(() => _currentIndex = 1); // Navigate to Issues tab
+              } else if (isServices) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
               } else {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => ReportIssueScreen(initialCategory: category, autoPickImage: autoPick)));
               }
@@ -416,141 +456,81 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Stack(
       children: [
         Container(width: size.width, height: size.height, color: bgDark),
-        Positioned(top: -30, right: -40, child: _buildCircle(140, primaryOrange.withOpacity(0.4))),
         
         SafeArea(
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: Text('Settings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white)),
+              const SizedBox(height: 20),
+              // Profile Info
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 100, height: 100,
+                      decoration: const BoxDecoration(color: Color(0xFF333333), shape: BoxShape.circle), // Darker gray bg
+                      child: Center(
+                        child: Text(
+                          (user?['fullName'] ?? 'C')[0].toUpperCase(),
+                          style: const TextStyle(color: primaryOrange, fontSize: 40, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0, right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(color: primaryOrange, shape: BoxShape.circle),
+                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 16),
+              Text(
+                user?['fullName'] ?? user?['email']?.split('@')[0] ?? 'User',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                user?['phone'] ?? '',
+                style: const TextStyle(color: Colors.white54, fontSize: 14),
+              ),
+              const SizedBox(height: 32),
               
+              // Menu Items
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2A2A2A), // cardDark instead of white
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        // Profile card with animation
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: const Duration(milliseconds: 500),
-                          builder: (context, value, child) => Transform.translate(
-                            offset: Offset(0, 20 * (1 - value)),
-                            child: Opacity(
-                              opacity: value.clamp(0.0, 1.0),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(color: const Color(0xFF333333), borderRadius: BorderRadius.circular(16)),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 56, height: 56,
-                                      decoration: const BoxDecoration(color: primaryOrange, shape: BoxShape.circle),
-                                      child: Center(
-                                        child: Text(
-                                          (user?['fullName'] ?? 'C')[0].toUpperCase(),
-                                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(user?['fullName'] ?? user?['email']?.split('@')[0] ?? 'User', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white)),
-                                          Text(user?['phone'] ?? '', style: const TextStyle(color: textMuted, fontSize: 13)),
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(onPressed: () => _showEditProfile(context), icon: const Icon(Icons.edit_outlined, color: primaryOrange)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        _buildSettingsItem(Icons.person_outline, 'Account', () => _showEditProfile(context), 0),
-                        _buildSettingsItem(Icons.notifications_outlined, 'Notifications', () => _showNotifications(context), 100),
+                        _buildSettingsItem(Icons.edit_outlined, 'Edit Profile', () => _showEditProfile(context), 0),
+                        _buildSettingsItem(Icons.lock_outline, 'Change Password', () {}, 100),
+                        _buildSettingsItem(Icons.notifications_outlined, 'Notifications', () => _showNotifications(context), 200),
                         _buildAppearanceItem(context),
-                        _buildSettingsItem(Icons.lock_outline, 'Privacy & Security', () => _showPrivacy(context), 200),
-                        _buildSettingsItem(Icons.headset_mic_outlined, 'Help and Support', () => _showHelp(context), 300),
-                        _buildSettingsItem(Icons.info_outline, 'About', () => _showAbout(context), 400),
+                        _buildSettingsItem(Icons.info_outline, 'About', () => _showAbout(context), 300),
                         
-                        const SizedBox(height: 32),
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: 1),
-                          duration: const Duration(milliseconds: 800),
-                          builder: (context, value, child) => Opacity(
-                            opacity: value.clamp(0.0, 1.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton(
-                                onPressed: () async {
-                                  await auth.logout();
-                                  if (mounted) {
-                                    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
-                                  }
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFFEF4444),
-                                  side: const BorderSide(color: Color(0xFFEF4444)),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                ),
-                                child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w600)),
-                              ),
+                        const SizedBox(height: 40),
+                        
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () => auth.logout(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryOrange,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 2,
                             ),
+                            child: const Text('Logout', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
                         ),
-                        
-                        const SizedBox(height: 32),
-                        // Danger Zone
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3A2020),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFF5A3030)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Danger Zone', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold, fontSize: 14)),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton(
-                                  onPressed: () => _showDeleteAccountDialog(context, auth),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFFEF4444),
-                                    side: const BorderSide(color: Color(0xFFEF4444)),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                  child: const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.w600)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 100), // Bottom padding for comfortable scrolling
+                        const SizedBox(height: 20),
+                        // Version
+                        Center(child: Text('Version 9.5.0', style: TextStyle(color: textMuted.withOpacity(0.5), fontSize: 12))),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -628,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
@@ -638,9 +618,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 20),
-              const Text('Edit Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textLight)),
+              const Text('Edit Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
               const SizedBox(height: 24),
               _buildDialogField(nameController, 'Full Name', Icons.person_outline),
               const SizedBox(height: 16),
@@ -684,14 +664,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildDialogField(TextEditingController controller, String label, IconData icon, {TextInputType? keyboardType}) {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF555555))),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: textLight),
+        style: const TextStyle(color: Colors.white),
+        cursorColor: primaryOrange,
         decoration: InputDecoration(
           hintText: label,
-          hintStyle: TextStyle(color: Colors.grey.shade400),
+          hintStyle: const TextStyle(color: Color(0xFF666666)),
           prefixIcon: Icon(icon, color: primaryOrange, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -708,7 +689,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _showSimpleDialog(BuildContext context, String title, String content) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24),
@@ -716,9 +697,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textLight)),
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white)),
             const SizedBox(height: 16),
             Text(content, style: const TextStyle(color: textMuted, height: 1.5)),
             const SizedBox(height: 24),
@@ -739,7 +720,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _showDeleteAccountDialog(BuildContext context, AuthService auth) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
@@ -815,5 +796,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+  String _getMonth(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1];
   }
 }
