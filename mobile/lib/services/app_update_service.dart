@@ -11,13 +11,13 @@ import 'supabase_service.dart';
 /// Service to check for app updates and FORCE users to update
 class AppUpdateService {
   // Current app version - UPDATE THIS when releasing new versions
-  static const String currentVersion = '9.5.1';
-  static const int currentVersionCode = 96;
+  static const String currentVersion = '10.0.0';
+  static const int currentVersionCode = 100;
 
   
   // GitHub releases URL
   static const String githubReleasesUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases';
-  static const String directDownloadUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases/download/v8.0.0/app-release.apk';
+  static const String directDownloadUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases/download/v10.0.0/app-release.apk';
 
   /// Check if an update is required
   static Future<Map<String, dynamic>> checkForUpdate() async {
@@ -128,6 +128,8 @@ class _UpdateDownloadScreenState extends State<_UpdateDownloadScreen> {
       await OpenFilex.open(_downloadedFilePath!);
       return;
     }
+
+    if (_isDownloading) return; // Prevent spam clicks
 
     setState(() {
       _isDownloading = true;
@@ -253,7 +255,7 @@ class _UpdateDownloadScreenState extends State<_UpdateDownloadScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _startDownload,
+                    onPressed: _isDownloading ? null : _startDownload,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF8C00),
                       shape: RoundedRectangleBorder(
@@ -277,7 +279,7 @@ class _UpdateDownloadScreenState extends State<_UpdateDownloadScreen> {
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: () => SystemNavigator.pop(),
+                      onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.white.withOpacity(0.3)),
                         shape: RoundedRectangleBorder(

@@ -22,7 +22,7 @@ class _BursaryScreenState extends State<BursaryScreen> {
   String _institutionType = 'university';
   String _guardianRelation = 'parent';
 
-  // Theme colors
+  // Theme colors - Matching ReportIssueScreen
   static const Color primaryOrange = Color(0xFFFF8C00);
   static const Color bgDark = Color(0xFF000000); // Pure Black
   static const Color cardDark = Color(0xFF1C1C1C); // Dark Gray
@@ -77,7 +77,6 @@ class _BursaryScreenState extends State<BursaryScreen> {
   Future<void> _loadApplications() async {
     setState(() => _isLoading = true);
     
-    // Check if online first
     final isOnline = await StorageService.isOnline();
     if (!isOnline) {
        setState(() => _isLoading = false);
@@ -111,7 +110,7 @@ class _BursaryScreenState extends State<BursaryScreen> {
   }
 
   Future<void> _submitApplication() async {
-    if (_institutionController.text.isEmpty || _annualFeesController.text.isEmpty) {
+    if (_institutionController.text.isEmpty || _annualFeesController.text.isEmpty || _courseController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields'), backgroundColor: Color(0xFFEF4444)));
       return;
     }
@@ -184,7 +183,7 @@ class _BursaryScreenState extends State<BursaryScreen> {
       backgroundColor: bgDark,
       body: Stack(
         children: [
-          // Background - Pure Black, no blobs
+          // Background - Pure Black
           Container(width: size.width, height: size.height, color: bgDark),
           
           // Content
@@ -241,8 +240,345 @@ class _BursaryScreenState extends State<BursaryScreen> {
     );
   }
 
-  Widget _buildCircle(double size, Color color) {
-    return Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color));
+  Widget _buildApplicationForm() {
+    return Column(
+      children: [
+        // Numbered Step Indicator
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(4, (i) {
+              final isActive = i <= _currentStep;
+              return Row(
+                children: [
+                  Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(
+                      color: isActive ? primaryOrange : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: isActive ? primaryOrange : Colors.grey.shade700, width: 2),
+                    ),
+                    child: Center(
+                      child: isActive 
+                          ? const Icon(Icons.check, color: Colors.white, size: 16)
+                          : Text('${i + 1}', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  if (i < 3)
+                    Container(
+                      width: 40, height: 2,
+                      color: i < _currentStep ? primaryOrange : Colors.grey.shade800,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                ],
+              );
+            }),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(['Applicant Details', 'Financial Info', 'Guardian Details', 'Reason'][_currentStep], 
+            style: const TextStyle(color: primaryOrange, fontSize: 16, fontWeight: FontWeight.w600)),
+        ),
+        
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: _buildCurrentStep(),
+          ),
+        ),
+        
+        // Buttons
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              if (_currentStep > 0) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _prevStep,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: textLight,
+                      side: BorderSide(color: Colors.grey.shade700),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text('Back'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _currentStep < 3 ? _nextStep : (_isSubmitting ? null : _submitApplication),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryOrange,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(_currentStep < 3 ? 'Continue' : (_isSubmitting ? 'Submitting...' : 'Submit Amount'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentStep() {
+    switch (_currentStep) {
+      case 0: return _buildInstitutionStep();
+      case 1: return _buildFinancialStep();
+      case 2: return _buildGuardianStep();
+      case 3: return _buildReasonStep();
+      default: return const SizedBox();
+    }
+  }
+
+  Widget _buildInstitutionStep() {
+    final bool isOtherSelected = _institutionController.text == 'Other' || 
+        (_institutionController.text.isNotEmpty && !_institutions.contains(_institutionController.text));
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDropdownField(
+          _institutions, 
+          isOtherSelected ? 'Other' : (_institutionController.text.isEmpty ? null : _institutionController.text), 
+          (v) {
+            if (v == 'Other') {
+              setState(() => _institutionController.text = 'Other');
+            } else {
+              setState(() => _institutionController.text = v ?? '');
+            }
+          },
+          hint: 'Select Institution'
+        ),
+        const SizedBox(height: 16),
+        if (isOtherSelected) ...[
+          _buildTextField(
+            _institutionController, 
+            'Enter your institution name', 
+            Icons.edit_outlined
+          ),
+          const SizedBox(height: 16),
+        ],
+        _buildTypeSelector(),
+        const SizedBox(height: 16),
+        _buildTextField(_admissionController, 'Admission Number', Icons.badge_outlined),
+        const SizedBox(height: 16),
+        _buildTextField(_courseController, 'Course Name', Icons.book_outlined),
+        const SizedBox(height: 16),
+        _buildTextField(_yearController, 'Year of Study (e.g. 1)', Icons.calendar_today_outlined, keyboardType: TextInputType.number),
+      ],
+    );
+  }
+
+  Widget _buildFinancialStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTextField(_annualFeesController, 'Annual Fees (KES)', Icons.payments_outlined, keyboardType: TextInputType.number),
+        const SizedBox(height: 20),
+        _buildSwitch('Do you have HELB Loan?', _hasHelb, (v) => setState(() => _hasHelb = v)),
+        _buildSwitch('Any other GoK Sponsorship?', _hasGoKSponsorship, (v) => setState(() => _hasGoKSponsorship = v)),
+        if (_hasGoKSponsorship) ...[
+          const SizedBox(height: 16),
+          _buildTextField(_sponsorshipDetailsController, 'Specify sponsorship', Icons.info_outline),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGuardianStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTextField(_guardianNameController, 'Guardian Full Name', Icons.person_outline),
+        const SizedBox(height: 16),
+        _buildTextField(_guardianPhoneController, 'Guardian Phone', Icons.phone_outlined, keyboardType: TextInputType.phone),
+        const SizedBox(height: 16),
+        _buildLabel('Relationship'),
+        _buildRelationSelector(),
+      ],
+    );
+  }
+
+  Widget _buildReasonStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: inputBg, // Dark black
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.transparent), // No border style
+          ),
+          child: TextField(
+            controller: _reasonController,
+            maxLines: 6,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Explain why you need this bursary...',
+              hintStyle: TextStyle(color: Colors.grey.shade600),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(16),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.lightbulb_outline, color: Color(0xFFD97706), size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Be specific about your needs for better chances', style: TextStyle(color: Colors.amber.shade900, fontSize: 13)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textLight)),
+    );
+  }
+
+  // Consistent Styling with ReportIssueScreen
+  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType}) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: inputBg,
+        prefixIcon: Icon(icon, color: primaryOrange, size: 22),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: primaryOrange, width: 2)),
+      ),
+    );
+  }
+
+  Widget _buildDropdownField(List<String> items, String? value, Function(String?) onChanged, {required String hint}) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      hint: Text(hint, style: const TextStyle(color: Colors.grey)),
+      dropdownColor: cardDark,
+      style: const TextStyle(color: textLight),
+      icon: const Icon(Icons.keyboard_arrow_down, color: primaryOrange),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: inputBg,
+        prefixIcon: const Icon(Icons.school_outlined, color: primaryOrange, size: 22),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: primaryOrange, width: 2)),
+      ),
+      items: items.map((v) => DropdownMenuItem(value: v, child: Text(v, overflow: TextOverflow.ellipsis))).toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildTypeSelector() {
+    final types = ['university', 'college', 'polytechnic', 'secondary'];
+    final labels = ['Uni', 'College', 'Poly', 'School'];
+    return Row(
+      children: List.generate(types.length, (i) => Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _institutionType = types[i]),
+          child: Container(
+            margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: _institutionType == types[i] ? primaryOrange : inputBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _institutionType == types[i] ? primaryOrange : Colors.transparent),
+            ),
+            child: Text(
+              labels[i],
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _institutionType == types[i] ? Colors.white : textMuted,
+                fontWeight: _institutionType == types[i] ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ),
+        ),
+      )),
+    );
+  }
+
+  Widget _buildSwitch(String title, bool value, Function(bool) onChanged) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: inputBg, // Dark black
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text(title, style: const TextStyle(color: textLight))),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: primaryOrange,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRelationSelector() {
+    final relations = ['parent', 'guardian', 'sibling', 'other'];
+    final icons = [Icons.family_restroom, Icons.person_outline, Icons.people_outline, Icons.more_horiz];
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: List.generate(relations.length, (i) {
+        final isSelected = _guardianRelation == relations[i];
+        return GestureDetector(
+          onTap: () => setState(() => _guardianRelation = relations[i]),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? primaryOrange : inputBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isSelected ? primaryOrange : Colors.transparent),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icons[i], color: isSelected ? Colors.white : textMuted, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  relations[i][0].toUpperCase() + relations[i].substring(1),
+                  style: TextStyle(color: isSelected ? Colors.white : textMuted),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
   }
 
   Widget _buildApplicationsList() {
@@ -385,360 +721,5 @@ class _BursaryScreenState extends State<BursaryScreen> {
       ),
     );
   }
-
-  Widget _buildApplicationForm() {
-    return Column(
-      children: [
-        // Numbered Step Indicator
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(4, (i) {
-              final isActive = i <= _currentStep;
-              return Row(
-                children: [
-                  Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      color: isActive ? primaryOrange : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: isActive ? primaryOrange : Colors.grey.shade700, width: 2),
-                    ),
-                    child: Center(
-                      child: isActive 
-                          ? const Icon(Icons.check, color: Colors.white, size: 16)
-                          : Text('${i + 1}', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  if (i < 3)
-                    Container(
-                      width: 40, height: 2,
-                      color: i < _currentStep ? primaryOrange : Colors.grey.shade800,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                ],
-              );
-            }),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(['Applicant Details', 'Financial Info', 'Guardian Details', 'Reason'][_currentStep], 
-            style: const TextStyle(color: primaryOrange, fontSize: 16, fontWeight: FontWeight.w600)),
-        ),
-        
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            child: _buildCurrentStep(),
-          ),
-        ),
-        
-        // Buttons
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            children: [
-              if (_currentStep > 0) ...[
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _prevStep,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: textLight,
-                      side: BorderSide(color: Colors.grey.shade700),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: const Text('Back'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-              ],
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _currentStep < 3 ? _nextStep : (_isSubmitting ? null : _submitApplication),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryOrange,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text(_currentStep < 3 ? 'Continue' : (_isSubmitting ? 'Submitting...' : 'Submit Amount'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCurrentStep() {
-    switch (_currentStep) {
-      case 0: return _buildInstitutionStep();
-      case 1: return _buildFinancialStep();
-      case 2: return _buildGuardianStep();
-      case 3: return _buildReasonStep();
-      default: return const SizedBox();
-    }
-  }
-
-  Widget _buildInstitutionStep() {
-    // Track selected institution separately for dropdown
-    final bool isOtherSelected = _institutionController.text == 'Other' || 
-        (_institutionController.text.isNotEmpty && !_institutions.contains(_institutionController.text));
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('Institution'),
-        _buildDropdownField(
-          _institutions, 
-          isOtherSelected ? 'Other' : (_institutionController.text.isEmpty ? null : _institutionController.text), 
-          (v) {
-            if (v == 'Other') {
-              setState(() => _institutionController.text = 'Other');
-            } else {
-              setState(() => _institutionController.text = v ?? '');
-            }
-          }
-        ),
-        if (isOtherSelected) ...[
-          const SizedBox(height: 12),
-          _buildTextField(
-            _institutionController, 
-            'Enter your institution name', 
-            Icons.edit_outlined
-          ),
-        ],
-        const SizedBox(height: 16),
-        _buildLabel('Type'),
-        _buildTypeSelector(),
-        const SizedBox(height: 16),
-        _buildLabel('Admission Number'),
-        _buildTextField(_admissionController, 'Enter admission no.', Icons.badge_outlined),
-        const SizedBox(height: 16),
-        _buildLabel('Course'),
-        _buildTextField(_courseController, 'Enter course name', Icons.book_outlined),
-        const SizedBox(height: 16),
-        _buildLabel('Year of Study'),
-        _buildTextField(_yearController, '1', Icons.calendar_today_outlined, keyboardType: TextInputType.number),
-      ],
-    );
-  }
-
-  Widget _buildFinancialStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('Annual Fees (KES)'),
-        _buildTextField(_annualFeesController, 'Enter amount', Icons.payments_outlined, keyboardType: TextInputType.number),
-        const SizedBox(height: 20),
-        _buildSwitch('Do you have HELB Loan?', _hasHelb, (v) => setState(() => _hasHelb = v)),
-        _buildSwitch('Any other GoK Sponsorship?', _hasGoKSponsorship, (v) => setState(() => _hasGoKSponsorship = v)),
-        if (_hasGoKSponsorship) ...[
-          const SizedBox(height: 16),
-          _buildTextField(_sponsorshipDetailsController, 'Specify sponsorship', Icons.info_outline),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildGuardianStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('Guardian Name'),
-        _buildTextField(_guardianNameController, 'Enter full name', Icons.person_outline),
-        const SizedBox(height: 16),
-        _buildLabel('Guardian Phone'),
-        _buildTextField(_guardianPhoneController, 'Enter phone', Icons.phone_outlined, keyboardType: TextInputType.phone),
-        const SizedBox(height: 16),
-        _buildLabel('Relationship'),
-        _buildRelationSelector(),
-      ],
-    );
-  }
-
-  Widget _buildReasonStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('Why do you need this bursary?'),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A), // Dark black
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.shade800),
-          ),
-          child: TextField(
-            controller: _reasonController,
-            maxLines: 6,
-            style: const TextStyle(color: Colors.white), // White text
-            decoration: InputDecoration(
-              hintText: 'Explain your situation...',
-              hintStyle: TextStyle(color: Colors.grey.shade600),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEF3C7),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.lightbulb_outline, color: Color(0xFFD97706), size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('Be specific about your needs for better chances', style: TextStyle(color: Colors.amber.shade900, fontSize: 13)),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textLight)),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A), // Dark black
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade800),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white), // White text
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade600),
-          prefixIcon: Icon(icon, color: primaryOrange, size: 22),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdownField(List<String> items, String? value, Function(String?) onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A), // Dark black
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade800),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        hint: Text('Select institution', style: TextStyle(color: Colors.grey.shade600)),
-        dropdownColor: cardDark,
-        style: const TextStyle(color: textLight),
-        icon: const Icon(Icons.keyboard_arrow_down, color: primaryOrange),
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.school_outlined, color: primaryOrange, size: 22),
-          prefixIconConstraints: BoxConstraints(minWidth: 40),
-          border: InputBorder.none,
-        ),
-        items: items.map((v) => DropdownMenuItem(value: v, child: Text(v, overflow: TextOverflow.ellipsis))).toList(),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _buildTypeSelector() {
-    final types = ['university', 'college', 'polytechnic', 'secondary'];
-    final labels = ['Uni', 'College', 'Poly', 'School'];
-    return Row(
-      children: List.generate(types.length, (i) => Expanded(
-        child: GestureDetector(
-          onTap: () => setState(() => _institutionType = types[i]),
-          child: Container(
-            margin: EdgeInsets.only(right: i < 3 ? 8 : 0),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: _institutionType == types[i] ? primaryOrange : const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _institutionType == types[i] ? primaryOrange : Colors.grey.shade800),
-            ),
-            child: Text(
-              labels[i],
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _institutionType == types[i] ? Colors.white : textMuted,
-                fontWeight: _institutionType == types[i] ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ),
-        ),
-      )),
-    );
-  }
-
-  Widget _buildSwitch(String title, bool value, Function(bool) onChanged) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A), // Dark black
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text(title, style: const TextStyle(color: textLight))),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: primaryOrange,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRelationSelector() {
-    final relations = ['parent', 'guardian', 'sibling', 'other'];
-    final icons = [Icons.family_restroom, Icons.person_outline, Icons.people_outline, Icons.more_horiz];
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: List.generate(relations.length, (i) {
-        final isSelected = _guardianRelation == relations[i];
-        return GestureDetector(
-          onTap: () => setState(() => _guardianRelation = relations[i]),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? primaryOrange : inputBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: isSelected ? primaryOrange : Colors.grey.shade800),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icons[i], color: isSelected ? Colors.white : textMuted, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  relations[i][0].toUpperCase() + relations[i].substring(1),
-                  style: TextStyle(color: isSelected ? Colors.white : textMuted),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
-    );
-  }
 }
+

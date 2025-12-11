@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'supabase_service.dart';
 import 'dashboard_service.dart';
 
@@ -45,6 +46,9 @@ class AuthService extends ChangeNotifier {
     // Update last activity timestamp
     if (_token != null) {
       await prefs.setInt('last_activity', DateTime.now().millisecondsSinceEpoch);
+      if (_user != null) {
+        _updateFCM(_user!['id'].toString());
+      }
     }
     
     notifyListeners();
@@ -78,6 +82,18 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Helper to update FCM token
+  Future<void> _updateFCM(String userId) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await SupabaseService.updateFCMToken(userId, token);
+      }
+    } catch (_) {}
+  }
+
+  // ... existing code ...
+
   Future<Map<String, dynamic>> login(String username, String password) async {
     _isLoading = true;
     notifyListeners();
@@ -89,6 +105,9 @@ class AuthService extends ChangeNotifier {
       if (result['success'] == true) {
         _user = result['user'];
         _token = 'supabase_session_${DateTime.now().millisecondsSinceEpoch}';
+        
+        // Update FCM Token
+        _updateFCM(_user!['id'].toString());
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);

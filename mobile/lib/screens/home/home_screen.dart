@@ -9,6 +9,7 @@ import '../issues/report_issue_screen.dart';
 import '../issues/my_issues_screen.dart';
 import '../auth/login_screen.dart';
 import '../../services/supabase_service.dart';
+import '../../services/app_update_service.dart';
 import '../../services/dashboard_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -42,6 +43,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _slideAnim = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
     _fadeController.forward();
     _slideController.forward();
+    
+    // Check for updates after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdates();
+    });
+  }
+
+  Future<void> _checkForUpdates() async {
+    final result = await AppUpdateService.checkForUpdate();
+    if (result['updateRequired'] == true && mounted) {
+      AppUpdateService.showMandatoryUpdateOverlay(context, downloadUrl: result['downloadUrl']);
+    }
   }
 
   @override

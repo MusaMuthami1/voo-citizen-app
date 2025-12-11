@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/auth_service.dart';
+import '../../services/supabase_service.dart';
 import '../../services/storage_service.dart';
 
 class ServicesScreen extends StatefulWidget {
@@ -16,10 +17,14 @@ class ServicesScreen extends StatefulWidget {
 class _ServicesScreenState extends State<ServicesScreen> {
   List<dynamic> _announcements = [];
   List<dynamic> _emergencyContacts = [
-    {'name': 'Police Emergency', 'phone': '999', 'icon': Icons.shield_outlined},
-    {'name': 'Ambulance', 'phone': '112', 'icon': Icons.medical_services_outlined},
-    {'name': 'Fire Brigade', 'phone': '999', 'icon': Icons.local_fire_department_outlined},
-    {'name': 'County Office', 'phone': '+254700000000', 'icon': Icons.business_outlined},
+    {'name': 'Police Emergency', 'phone': '999', 'icon': Icons.local_police_outlined},
+    {'name': 'County Office', 'phone': '0706757140', 'icon': Icons.business_center_outlined}, // User requested
+    {'name': 'Kitui Fire & Rescue', 'phone': '0702615888', 'icon': Icons.local_fire_department_outlined},
+    {'name': 'Kitui Biospital Ambulance', 'phone': '0758722015', 'icon': Icons.medical_services_outlined}, // Kitui Referral
+    {'name': 'KITWASCO (Water)', 'phone': '0701545554', 'icon': Icons.water_drop_outlined},
+    {'name': 'Red Cross', 'phone': '1199', 'icon': Icons.medical_services_outlined},
+    {'name': 'Gender Violence', 'phone': '1195', 'icon': Icons.shield_outlined},
+    {'name': 'NTSA', 'phone': '0709932000', 'icon': Icons.traffic_outlined},
   ];
   bool _isLoading = false;
 
@@ -300,50 +305,78 @@ class _ServicesScreenState extends State<ServicesScreen> {
   void _showLostIdForm(BuildContext context) {
     final idController = TextEditingController();
     final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final descController = TextEditingController();
+    bool _isSubmitting = false;
     
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 20),
-            const Text('Report Lost ID', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
-            const SizedBox(height: 8),
-            const Text('We will notify you if your ID is found.', style: TextStyle(color: textMuted, fontSize: 14)),
-            const SizedBox(height: 24),
-            _buildTextField(idController, 'National ID Number', Icons.badge_outlined),
-            const SizedBox(height: 16),
-            _buildTextField(nameController, 'Full Name on ID', Icons.person_outline),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (idController.text.isEmpty || nameController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields'), backgroundColor: Color(0xFFEF4444)));
-                    return;
-                  }
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted successfully!'), backgroundColor: Color(0xFF10B981)));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryOrange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                const Text('Report Lost ID', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
+                const SizedBox(height: 8),
+                const Text('We will notify you if your ID is found.', style: TextStyle(color: textMuted, fontSize: 14)),
+                const SizedBox(height: 24),
+                _buildTextField(idController, 'National ID Number', Icons.badge_outlined),
+                const SizedBox(height: 16),
+                _buildTextField(nameController, 'Full Name on ID', Icons.person_outline),
+                const SizedBox(height: 16),
+                _buildTextField(phoneController, 'Contact Phone Number', Icons.phone_outlined, keyboardType: TextInputType.phone),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : () async {
+                      if (idController.text.isEmpty || nameController.text.isEmpty || phoneController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields'), backgroundColor: Color(0xFFEF4444)));
+                        return;
+                      }
+                      
+                      setState(() => _isSubmitting = true);
+                      
+                      try {
+                        final result = await SupabaseService.submitLostId(
+                          fullName: nameController.text,
+                          idNumber: idController.text,
+                          phoneNumber: phoneController.text,
+                        );
+                        
+                        if (!context.mounted) return;
+                        
+                        if (result['success'] == true) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted successfully!'), backgroundColor: Color(0xFF10B981)));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'] ?? 'Submission failed'), backgroundColor: const Color(0xFFEF4444)));
+                        }
+                      } finally {
+                        if (context.mounted) setState(() => _isSubmitting = false);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryOrange,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    child: Text(_isSubmitting ? 'Submitting...' : 'Submit Report', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                  ),
                 ),
-                child: const Text('Submit Report', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
-              ),
+                const SizedBox(height: 24),
+              ],
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );
@@ -351,54 +384,80 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   void _showFeedbackForm(BuildContext context) {
     final messageController = TextEditingController();
+    bool _isSubmitting = false;
     
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 20),
-            const Text('Send Feedback', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
-            const SizedBox(height: 8),
-            const Text('Your feedback helps us improve.', style: TextStyle(color: textMuted, fontSize: 14)),
-            const SizedBox(height: 24),
-            _buildTextField(messageController, 'Your message', Icons.edit_outlined, maxLines: 4),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (messageController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a message'), backgroundColor: Color(0xFFEF4444)));
-                    return;
-                  }
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: Color(0xFF10B981)));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryOrange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                const Text('Send Feedback', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
+                const SizedBox(height: 8),
+                const Text('Your feedback helps us improve.', style: TextStyle(color: textMuted, fontSize: 14)),
+                const SizedBox(height: 24),
+                _buildTextField(messageController, 'Your message', Icons.edit_outlined, maxLines: 4),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : () async {
+                      if (messageController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a message'), backgroundColor: Color(0xFFEF4444)));
+                        return;
+                      }
+
+                      setState(() => _isSubmitting = true);
+
+                      try {
+                        final auth = Provider.of<AuthService>(context, listen: false);
+                        final userId = auth.user?['id']?.toString();
+
+                        final result = await SupabaseService.submitFeedback(
+                          message: messageController.text,
+                          userId: userId,
+                        );
+
+                        if (!context.mounted) return;
+
+                        if (result['success'] == true) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: Color(0xFF10B981)));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'] ?? 'Submission failed'), backgroundColor: const Color(0xFFEF4444)));
+                        }
+                      } finally {
+                         if (context.mounted) setState(() => _isSubmitting = false);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryOrange,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    child: Text(_isSubmitting ? 'Sending...' : 'Send Feedback', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                  ),
                 ),
-                child: const Text('Send Feedback', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
-              ),
+                const SizedBox(height: 24),
+              ],
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1}) {
+  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1, TextInputType? keyboardType}) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
@@ -407,6 +466,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         style: const TextStyle(color: textDark),
         decoration: InputDecoration(
           hintText: hint,
@@ -424,39 +484,41 @@ class _ServicesScreenState extends State<ServicesScreen> {
       context: context,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 20),
-            const Text('Emergency Contacts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
-            const SizedBox(height: 24),
-            ..._emergencyContacts.map((c) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(16)),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: const Color(0xFFFEE2E2).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(c['icon'], color: const Color(0xFFEF4444)),
+      builder: (ctx) => SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 20),
+              const Text('Emergency Contacts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
+              const SizedBox(height: 24),
+              ..._emergencyContacts.map((c) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(16)),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: const Color(0xFFFEE2E2).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    child: Icon(c['icon'], color: const Color(0xFFEF4444)),
+                  ),
+                  title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.w600, color: textDark)),
+                  subtitle: Text(c['phone'], style: const TextStyle(color: textMuted)),
+                  trailing: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: const Color(0xFF000000), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.call, color: Color(0xFF10B981), size: 20),
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _callNumber(c['phone']);
+                  },
                 ),
-                title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.w600, color: textDark)),
-                subtitle: Text(c['phone'], style: const TextStyle(color: textMuted)),
-                trailing: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: const Color(0xFF000000), borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.call, color: Color(0xFF10B981), size: 20),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _callNumber(c['phone']);
-                },
-              ),
-            )),
-          ],
+              )),
+            ],
+          ),
         ),
       ),
     );

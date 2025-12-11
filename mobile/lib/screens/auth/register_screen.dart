@@ -44,8 +44,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _selectedVillage;
 
   final List<String> _villages = [
-    'Kyamatu', 'Mwanyani', 'Itoloni', 'Kisovo', 'Iiani',
-    'Kituluni', 'Kwa Mutonga', 'Kwa Mutuvi', 'Kwa Kasee', 'Other'
+    'Ndili', 'Katulani', 'Kyamatu', 'Nzunguni', 'Wikililye',
+    'Mbiuni', 'Kasikeu', 'Kwa Munyao', 'Miandani', 'Nguutani', 'Other'
   ];
 
   @override
@@ -338,7 +338,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 16),
         
         _buildLabel('Village'),
-        _buildDropdown(),
+        _buildVillageSelector(),
         
         if (_selectedVillage == 'Other') ...[
           const SizedBox(height: 16),
@@ -676,25 +676,153 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: inputBorder),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: _selectedVillage,
-        dropdownColor: cardDark,
-        hint: const Text('Select village', style: TextStyle(color: textMuted)),
-        icon: const Icon(Icons.keyboard_arrow_down, color: textMuted),
-        style: const TextStyle(color: textLight, fontSize: 15),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
+  Widget _buildVillageSelector() {
+    return GestureDetector(
+      onTap: () => _showVillagePicker(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A), // Dark black to match inputs
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF555555), width: 1),
         ),
-        items: _villages.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
-        onChanged: (v) => setState(() => _selectedVillage = v),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _selectedVillage ?? 'Select Village',
+              style: TextStyle(
+                color: _selectedVillage == null ? const Color(0xFF888888) : const Color(0xFFFFFFFF),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: primaryOrange),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showVillagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardDark,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) {
+          return _VillageSearchSheet(
+            villages: _villages,
+            onSelect: (village) {
+              setState(() => _selectedVillage = village);
+              Navigator.pop(ctx);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrangeButton(String text, VoidCallback? onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryOrange,
+          foregroundColor: bgDark,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+          disabledBackgroundColor: primaryOrange.withOpacity(0.5),
+        ),
+        child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+      ),
+    );
+  }
+}
+
+class _VillageSearchSheet extends StatefulWidget {
+  final List<String> villages;
+  final Function(String) onSelect;
+
+  const _VillageSearchSheet({required this.villages, required this.onSelect});
+
+  @override
+  State<_VillageSearchSheet> createState() => _VillageSearchSheetState();
+}
+
+class _VillageSearchSheetState extends State<_VillageSearchSheet> {
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color bgDark = Color(0xFF000000);
+
+  final _searchController = TextEditingController();
+  List<String> _filteredVillages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredVillages = widget.villages;
+  }
+
+  void _filter(String query) {
+    setState(() {
+      _filteredVillages = widget.villages
+          .where((v) => v.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 20),
+          const Text('Select Village', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          
+          // Search Bar
+          TextField(
+            controller: _searchController,
+            onChanged: _filter,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Search village...',
+              hintStyle: const TextStyle(color: Colors.grey),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFFFF8C00)),
+              filled: true,
+              fillColor: const Color(0xFF1A1A1A),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          Expanded(
+            child: ListView.separated(
+              itemCount: _filteredVillages.length,
+              separatorBuilder: (_, __) => const Divider(color: Color(0xFF333333)),
+              itemBuilder: (context, index) {
+                final village = _filteredVillages[index];
+                return ListTile(
+                  title: Text(village, style: const TextStyle(color: Colors.white, fontSize: 16)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                  onTap: () => widget.onSelect(village),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

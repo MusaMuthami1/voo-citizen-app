@@ -31,7 +31,10 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     'Public Safety',
     'Other'
   ];
-  final List<String> _villages = ['Village A', 'Village B', 'Village C', 'Other'];
+  final List<String> _villages = [
+    'Ndili', 'Katulani', 'Kyamatu', 'Nzunguni', 'Wikililye',
+    'Mbiuni', 'Kasikeu', 'Kwa Munyao', 'Miandani', 'Nguutani', 'Other'
+  ];
 
   // Image Upload Logic
   final ImagePicker _picker = ImagePicker();

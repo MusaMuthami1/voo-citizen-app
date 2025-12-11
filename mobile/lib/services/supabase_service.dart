@@ -597,4 +597,77 @@ class SupabaseService {
       return {};
     }
   }
+  // ============ TOKEN MANAGEMENT ============
+  
+  static Future<void> updateFCMToken(String userId, String token) async {
+    try {
+      final updateUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
+      await http.patch(
+        Uri.parse(updateUrl),
+        headers: _headers,
+        body: jsonEncode({'fcm_token': token}),
+      );
+    } catch (e) {
+      _debugLog('Failed to update FCM token: $e');
+    }
+  }
+
+  // ============ LOST ID & FEEDBACK ============
+
+  static Future<Map<String, dynamic>> submitLostId({
+    required String fullName,
+    required String idNumber,
+    String? phoneNumber,
+    String? description,
+  }) async {
+    try {
+      final url = '$supabaseUrl/rest/v1/lost_ids';
+      final res = await http.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: jsonEncode({
+          'full_name': fullName,
+          'id_number': idNumber,
+          'phone_number': phoneNumber,
+          'description': description,
+          'status': 'reported',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+
+      if (res.statusCode == 201) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': 'Failed to submit report'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Submit failed: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> submitFeedback({
+    required String message,
+    String? userId,
+  }) async {
+    try {
+      final url = '$supabaseUrl/rest/v1/app_feedback';
+      final res = await http.post(
+        Uri.parse(url),
+        headers: _headers,
+        body: jsonEncode({
+          'message': message,
+          if (userId != null) 'user_id': userId,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+
+      if (res.statusCode == 201) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': 'Failed to submit feedback'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Submit failed: $e'};
+    }
+  }
 }
