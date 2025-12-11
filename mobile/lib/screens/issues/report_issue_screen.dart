@@ -56,7 +56,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
     
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50, maxWidth: 1024, maxHeight: 1024);
       if (image != null) {
         final bytes = await File(image.path).readAsBytes();
         final base64 = 'data:image/jpeg;base64,${base64Encode(bytes)}'; // Data URI format

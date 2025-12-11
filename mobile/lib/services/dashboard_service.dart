@@ -227,15 +227,21 @@ class DashboardService {
         }),
       );
       
-      final data = jsonDecode(res.body);
-      if (res.statusCode == 201) {
-        return {'success': true, ...data};
-      } else {
-        return {'success': false, 'error': data['error'] ?? 'Submit failed'};
+      try {
+        final data = jsonDecode(res.body);
+        if (res.statusCode == 201) {
+          return {'success': true, ...data};
+        } else {
+          return {'success': false, 'error': data['error'] ?? 'Submit failed (Status ${res.statusCode})'};
+        }
+      } catch (decodeErr) {
+        // If response is not JSON (e.g., HTML error page 413/500)
+        final bodySample = res.body.length > 200 ? res.body.substring(0, 200) : res.body;
+        return {'success': false, 'error': 'Server Error (${res.statusCode}): $bodySample'}; 
       }
     } catch (e) {
       print('Submit mobile issue error: $e');
-      return {'success': false, 'error': 'Submit failed: $e'};
+      return {'success': false, 'error': 'Connection failed: $e'};
     }
   }
 
