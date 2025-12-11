@@ -25,10 +25,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   // Theme colors - Dark Orange Theme
   static const Color primaryOrange = Color(0xFFFF8C00);
-  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color bgDark = Color(0xFF000000); // Pure Black
   static const Color textDark = Color(0xFFFFFFFF);
   static const Color textMuted = Color(0xFF888888);
-  static const Color cardBg = Color(0xFF2A2A2A);
+  static const Color cardBg = Color(0xFF1C1C1C); // Dark Gray Sheet
 
   @override
   void initState() {
@@ -88,31 +88,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
       backgroundColor: bgDark,
       body: Stack(
         children: [
-          // Static background decoration
-          Positioned(
-            top: -40,
-            right: -60,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.15),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 80,
-            left: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryOrange.withOpacity(0.4),
-              ),
-            ),
-          ),
+          // Background - Pure Black
+          Container(width: double.infinity, height: double.infinity, color: bgDark),
 
           SafeArea(
             child: Column(
@@ -148,7 +125,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF2A2A2A), // cardDark instead of light
+                      color: cardBg, 
                       borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                     ),
                     child: RefreshIndicator(
@@ -204,9 +181,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                     margin: const EdgeInsets.only(right: 12),
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF333333),
+                                      color: const Color(0xFF2A2A2A),
                                       borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: const Color(0xFF444444)),
                                     ),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,9 +206,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF333333),
+                                  color: const Color(0xFF2A2A2A),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color(0xFF444444)),
                                 ),
                                 child: Row(
                                   children: [
@@ -247,9 +222,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                 margin: const EdgeInsets.only(bottom: 16),
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF333333),
+                                  color: const Color(0xFF2A2A2A),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color(0xFF444444)),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,9 +272,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF333333),
+          color: const Color(0xFF2A2A2A),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF444444)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +284,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
               decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
               child: Icon(icon, color: color, size: 24),
             ),
-            constSpacer(height: 10),
+            const SizedBox(height: 10),
             Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 2),
             Text(subtitle, style: const TextStyle(color: textMuted, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -331,7 +304,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
@@ -339,7 +312,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
             const Text('Report Lost ID', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
             const SizedBox(height: 8),
@@ -382,7 +355,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
@@ -390,7 +363,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
             const Text('Send Feedback', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
             const SizedBox(height: 8),
@@ -428,9 +401,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
+        color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
       ),
       child: TextField(
         controller: controller,
@@ -438,7 +410,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         style: const TextStyle(color: textDark),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade400),
+          hintStyle: const TextStyle(color: Color(0xFF666666)),
           prefixIcon: maxLines == 1 ? Icon(icon, color: primaryOrange, size: 22) : Container(margin: const EdgeInsets.only(top: 12), alignment: Alignment.topCenter, width: 48, child: Icon(icon, color: primaryOrange, size: 22)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -450,7 +422,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   void _showEmergencyContacts(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
@@ -458,24 +430,24 @@ class _ServicesScreenState extends State<ServicesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF555555), borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
             const Text('Emergency Contacts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textDark)),
             const SizedBox(height: 24),
             ..._emergencyContacts.map((c) => Container(
               margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(16)),
               child: ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: const Color(0xFFFEE2E2).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                   child: Icon(c['icon'], color: const Color(0xFFEF4444)),
                 ),
                 title: Text(c['name'], style: const TextStyle(fontWeight: FontWeight.w600, color: textDark)),
                 subtitle: Text(c['phone'], style: const TextStyle(color: textMuted)),
                 trailing: Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: const Color(0xFF000000), borderRadius: BorderRadius.circular(8)),
                   child: const Icon(Icons.call, color: Color(0xFF10B981), size: 20),
                 ),
                 onTap: () {
@@ -494,14 +466,14 @@ class _ServicesScreenState extends State<ServicesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('About VOO Citizen', style: TextStyle(fontWeight: FontWeight.bold, color: textDark)),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Version 1.0.1', style: TextStyle(color: textMuted)),
+            Text('Version 10.0.0', style: TextStyle(color: textMuted)),
             SizedBox(height: 12),
             Text('Empowering the citizens of Voo Kyamatu Ward with easy access to services and reporting tools.', style: TextStyle(color: textDark, height: 1.5)),
           ],

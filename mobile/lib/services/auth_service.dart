@@ -83,12 +83,12 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Try dashboard login first (new mobile user system)
-      final result = await DashboardService.loginUser(username, password);
+      // Pass raw input to SupabaseService - it handles phone formatting and username lookup
+      final result = await SupabaseService.login(phone: username, password: password);
 
       if (result['success'] == true) {
         _user = result['user'];
-        _token = result['token'] ?? 'dashboard_session_${DateTime.now().millisecondsSinceEpoch}';
+        _token = 'supabase_session_${DateTime.now().millisecondsSinceEpoch}';
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
@@ -107,6 +107,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+
   Future<Map<String, dynamic>> register(String fullName, String phone, String idNumber, String password, {String? village, String? username}) async {
     _isLoading = true;
     notifyListeners();
@@ -118,19 +119,19 @@ class AuthService extends ChangeNotifier {
         formattedPhone = '+254$phone';
       }
 
-      // Use dashboard mobile registration
-      final result = await DashboardService.registerUser(
+      // Use Supabase registration to store in Supabase DB
+      final result = await SupabaseService.register(
         fullName: fullName,
-        username: username ?? phone.replaceAll('+254', ''),
-        phoneNumber: formattedPhone,
+        phone: formattedPhone,
+        idNumber: idNumber,
         password: password,
-        nationalId: idNumber,
         village: village,
+        username: username,
       );
 
       if (result['success'] == true) {
-        // Don't auto-login, redirect to login screen with username pre-filled
-        return {'success': true, 'username': username ?? phone.replaceAll('+254', '')};
+        // Don't auto-login, redirect to login screen with phone pre-filled
+        return {'success': true, 'username': formattedPhone};
       } else {
         return {'success': false, 'error': result['error'] ?? 'Registration failed'};
       }
@@ -141,6 +142,7 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   Future<Map<String, dynamic>> updateProfile({
     required String fullName,

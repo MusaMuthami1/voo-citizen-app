@@ -18,10 +18,10 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
 
   // Theme colors
   static const Color primaryOrange = Color(0xFFFF8C00);
-  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color bgDark = Color(0xFF000000); // Pure Black
   static const Color textLight = Color(0xFFFFFFFF);
   static const Color textMuted = Color(0xFF888888);
-  static const Color cardBg = Color(0xFF2A2A2A);
+  static const Color cardBg = Color(0xFF1C1C1C); // Dark Gray
 
   @override
   void initState() {
@@ -90,41 +90,12 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine greeting based on time
-    final hour = DateTime.now().hour;
-    String greeting = 'Good Morning';
-    if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
-    else if (hour >= 17) greeting = 'Good Evening';
-
     return Scaffold(
       backgroundColor: bgDark,
       body: Stack(
         children: [
-          // Static background decoration (no animation)
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryOrange.withOpacity(0.3),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 100,
-            left: -30,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.2),
-              ),
-            ),
-          ),
+          // Background Pure Black
+          Container(width: double.infinity, height: double.infinity, color: bgDark),
 
           SafeArea(
             child: Column(
@@ -175,7 +146,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                   child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF2A2A2A),
+                      color: cardBg, // #1C1C1C
                       borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                     ),
                     child: _isLoading
@@ -222,7 +193,7 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                       child: Container(
                                         margin: const EdgeInsets.only(bottom: 16),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF333333),
+                                          color: const Color(0xFF2A2A2A), // Matches Input/Item BG
                                           borderRadius: BorderRadius.circular(16),
                                         ),
                                         child: Padding(

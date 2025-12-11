@@ -25,12 +25,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
 
-  // Theme colors - Dark Orange Theme
-  static const Color primaryOrange = Color(0xFFFF8C00);
+  // Theme colors - EXACT mockup colors
+  static const Color primaryOrange = Color(0xFFFF8C00); // Exact orange from mockup
   static const Color lightOrange = Color(0xFFFFB347);
-  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color bgDark = Color(0xFF000000); // Pure black background
+  static const Color cardDark = Color(0xFF1C1C1C); // Exact card background
   static const Color textLight = Color(0xFFFFFFFF);
-  static const Color textMuted = Color(0xFF888888);
+  static const Color textMuted = Color(0xFF808080); // Exact gray from mockup
 
   @override
   void initState() {
@@ -87,13 +88,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A), // cardDark
+          color: const Color(0xFF000000), // Pure black from mockup
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, -2))],
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (i) => setState(() => _currentIndex = i),
-          backgroundColor: const Color(0xFF2A2A2A), // cardDark
+          backgroundColor: const Color(0xFF000000), // Pure black from mockup
           indicatorColor: Colors.transparent, // Remove indicator block
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           height: 70,
@@ -118,7 +119,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildHomeTab(Map<String, dynamic>? user, double screenWidth) {
-    final announcements = StorageService.getCachedAnnouncements();
+    var announcements = StorageService.getCachedAnnouncements();
+    // Verify cached data or wait for refresh
+    // No hardcoded data here to ensure realtime accuracy
     final recentAnnouncement = announcements.isNotEmpty ? announcements.first : null;
     final size = MediaQuery.of(context).size;
     final firstName = user?['fullName']?.split(' ')[0] ?? user?['email']?.split('@')[0] ?? 'User';
@@ -173,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Animated greeting
+                  // Animated greeting with avatar
                   FadeTransition(
                     opacity: _fadeAnim,
                     child: SlideTransition(
@@ -194,7 +197,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${_getGreeting()}, $firstName',
+                                  '${_getGreeting()},',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    shadows: [Shadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 1), blurRadius: 3)],
+                                  ),
+                                ),
+                                Text(
+                                  firstName,
                                   style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w700,
@@ -203,8 +215,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text('Welcome back', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                                Text('Welcome back', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14)),
                               ],
+                            ),
+                          ),
+                          // User Avatar
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFB8860B), // Golden/brown color from mockup
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                firstName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -213,44 +244,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 28),
 
-                  // Animated white card for Quick Actions
-                  SlideTransition(
-                    position: _slideAnim,
-                    child: FadeTransition(
-                      opacity: _fadeAnim,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A), // cardDark
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 5))],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textLight)),
-                            const SizedBox(height: 16),
-                            
-                            GridView.count(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.3,
-                              children: [
-                                _buildQuickAction(Icons.report_problem_outlined, 'Report Issue', primaryOrange, screenWidth, isReport: true, delay: 0),
-                                _buildQuickAction(Icons.list_alt, 'My Issues', const Color(0xFF0EA5E9), screenWidth, isMyIssues: true, delay: 100),
-                                _buildQuickAction(Icons.school, 'Bursary', const Color(0xFF9333EA), screenWidth, isBursary: true, delay: 200),
-                                _buildQuickAction(Icons.apps, 'Services', const Color(0xFF14B8A6), screenWidth, isServices: true, delay: 300),
-                              ],
-                            ),
 
-                          ],
-                        ),
-                      ),
-                    ),
+                  // Quick Actions grid - NO title, matching mockup exactly
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.0, // Square cards like mockup
+                    children: [
+                      _buildMockupCard(Icons.warning_amber_rounded, 'Report Issue', primaryOrange, isReport: true),
+                      _buildMockupCard(Icons.assignment_outlined, 'My Issues', const Color(0xFF808080), isMyIssues: true),
+                      _buildMockupCard(Icons.school_outlined, 'Bursary', const Color(0xFF808080), isBursary: true),
+                      _buildMockupCard(Icons.grid_view_rounded, 'Services', const Color(0xFF808080), isServices: true),
+                    ],
                   ),
+
 
                   const SizedBox(height: 24),
                   
@@ -262,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   const SizedBox(height: 16),
                   
                   SizedBox(
-                    height: 200,
+                    height: 250,
                     child: announcements.isEmpty 
                       ? Center(
                           child: Container(
@@ -401,6 +411,127 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  // Exact mockup card - matches the screenshot perfectly
+  Widget _buildMockupCard(IconData icon, String label, Color color, 
+      {bool isBursary = false, bool isReport = false, bool isMyIssues = false, bool isServices = false}) {
+    return GestureDetector(
+      onTap: () {
+        if (isBursary) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const BursaryScreen()));
+        } else if (isReport) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportIssueScreen()));
+        } else if (isMyIssues) {
+          setState(() => _currentIndex = 1);
+        } else if (isServices) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardDark, // #1C1C1C exact from mockup
+          borderRadius: BorderRadius.circular(18),
+          border: isReport 
+              ? Border.all(color: primaryOrange, width: 2.5) // #FF8C00 exact orange border
+              : Border.all(color: Colors.transparent, width: 0), // NO border for others
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 44, color: color), // Icon directly on card, no circular background
+            const SizedBox(height: 12), // 12-16px spacing
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15, // 14-16px font size
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Dark rectangular Quick Action - matches mockup exactly
+  Widget _buildDarkQuickAction(IconData icon, String label, Color color, 
+      {bool isBursary = false, bool isReport = false, bool isMyIssues = false, bool isServices = false}) {
+    return GestureDetector(
+      onTap: () {
+        if (isBursary) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const BursaryScreen()));
+        } else if (isReport) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportIssueScreen()));
+        } else if (isMyIssues) {
+          setState(() => _currentIndex = 1);
+        } else if (isServices) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A), // Dark card background
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 20, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Mockup-style Quick Action - matches design exactly
+  Widget _buildQuickActionMockup(IconData icon, String label, Color color, 
+      {bool isBursary = false, bool isReport = false, bool isMyIssues = false, bool isServices = false}) {
+    return GestureDetector(
+      onTap: () {
+        if (isBursary) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const BursaryScreen()));
+        } else if (isReport) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportIssueScreen()));
+        } else if (isMyIssues) {
+          setState(() => _currentIndex = 1);
+        } else if (isServices) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 22, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Text(label, style: const TextStyle(color: Color(0xFF1A1A1A), fontSize: 13, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickAction(IconData icon, String label, Color color, double screenWidth, 
       {String? category, bool autoPick = false, bool isBursary = false, bool isReport = false, bool isMyIssues = false, bool isServices = false, int delay = 0}) {
     return TweenAnimationBuilder<double>(
@@ -422,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               } else if (isServices) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ServicesScreen()));
               } else {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => ReportIssueScreen(initialCategory: category, autoPickImage: autoPick)));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportIssueScreen()));
               }
             },
             child: Container(
@@ -467,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   children: [
                     Container(
                       width: 100, height: 100,
-                      decoration: const BoxDecoration(color: Color(0xFF333333), shape: BoxShape.circle), // Darker gray bg
+                      decoration: const BoxDecoration(color: cardDark, shape: BoxShape.circle), 
                       child: Center(
                         child: Text(
                           (user?['fullName'] ?? 'C')[0].toUpperCase(),
@@ -498,11 +629,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 32),
               
-              // Menu Items
+              // Menu Items wrapped in a Sheet-like container
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: const BoxDecoration(
+                    color: cardDark,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
@@ -520,16 +655,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           child: ElevatedButton(
                             onPressed: () => auth.logout(),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryOrange,
+                              backgroundColor: const Color(0xFFEF4444).withOpacity(0.1),
+                              foregroundColor: const Color(0xFFEF4444),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 2,
+                              elevation: 0,
+                              side: const BorderSide(color: Color(0xFFEF4444)),
                             ),
-                            child: const Text('Logout', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                            child: const Text('Logout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                           ),
                         ),
                         const SizedBox(height: 20),
                         // Version
-                        Center(child: Text('Version 9.5.0', style: TextStyle(color: textMuted.withOpacity(0.5), fontSize: 12))),
+                        Center(child: Text('Version 10.0.0', style: TextStyle(color: textMuted.withOpacity(0.5), fontSize: 12))),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -544,58 +681,36 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildSettingsItem(IconData icon, String title, VoidCallback onTap, int delay) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 400 + delay),
-      builder: (context, value, child) => Transform.translate(
-        offset: Offset(20 * (1 - value), 0),
-        child: Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: const Color(0xFF444444)))),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: primaryOrange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: primaryOrange, size: 22),
-              ),
-              title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
-              trailing: const Icon(Icons.chevron_right, color: textMuted),
-              onTap: onTap,
-            ),
-          ),
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A), // Slightly lighter for items
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Icon(icon, color: primaryOrange, size: 22),
+        title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
+        trailing: const Icon(Icons.chevron_right, color: textMuted),
+        onTap: onTap,
       ),
     );
   }
 
   Widget _buildAppearanceItem(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 550),
-      builder: (context, value, child) => Transform.translate(
-        offset: Offset(20 * (1 - value), 0),
-        child: Opacity(
-          opacity: value.clamp(0.0, 1.0),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: const Color(0xFF444444)))),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: primaryOrange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: primaryOrange, size: 22),
-              ),
-              title: const Text('Appearance', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
-              subtitle: Text(themeProvider.isDarkMode ? 'Dark Mode' : 'Light Mode', style: const TextStyle(color: textMuted, fontSize: 12)),
-              trailing: Switch(value: themeProvider.isDarkMode, onChanged: (_) => themeProvider.toggleTheme(), activeColor: primaryOrange),
-            ),
-          ),
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: primaryOrange, size: 22),
+        title: const Text('Appearance', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
+        subtitle: Text(themeProvider.isDarkMode ? 'Dark Mode' : 'Light Mode', style: const TextStyle(color: textMuted, fontSize: 12)),
+        trailing: Switch(value: themeProvider.isDarkMode, onChanged: (_) => themeProvider.toggleTheme(), activeColor: primaryOrange),
       ),
     );
   }
@@ -608,7 +723,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
+      backgroundColor: cardDark, // Dark theme
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
@@ -631,7 +746,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey.shade700),
+                        padding: const EdgeInsets.symmetric(vertical: 14), 
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))
+                      ),
                       child: const Text('Cancel'),
                     ),
                   ),
@@ -644,7 +764,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         if (mounted) {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(result['success'] ? 'Profile updated!' : result['error']), backgroundColor: result['success'] ? const Color(0xFF4CAF50) : const Color(0xFFEF4444), behavior: SnackBarBehavior.floating),
+                            SnackBar(
+                              content: Text(result['success'] ? 'Profile updated!' : result['error']), 
+                              backgroundColor: result['success'] ? const Color(0xFF4CAF50) : const Color(0xFFEF4444), 
+                              behavior: SnackBarBehavior.floating
+                            ),
                           );
                         }
                       },
@@ -664,7 +788,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildDialogField(TextEditingController controller, String label, IconData icon, {TextInputType? keyboardType}) {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF555555))),
+      decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.transparent)),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
@@ -684,12 +808,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _showNotifications(BuildContext context) => _showSimpleDialog(context, 'Notifications', 'You have no new notifications.');
   void _showPrivacy(BuildContext context) => _showSimpleDialog(context, 'Privacy & Security', 'Your privacy is important. We collect minimal data only for service delivery.');
   void _showHelp(BuildContext context) => _showSimpleDialog(context, 'Help & Support', 'Contact the Ward Admin office or email support@voo-ward.go.ke');
-  void _showAbout(BuildContext context) => _showSimpleDialog(context, 'About VOO Citizen', 'Version 1.0.1\n\nEmpowering citizens.\n\n© 2025 Voo Kyamatu Ward');
+  void _showAbout(BuildContext context) => _showSimpleDialog(context, 'About VOO Citizen', 'Version 10.0.0\n\nEmpowering citizens.\n\n© 2025 Voo Kyamatu Ward');
 
   void _showSimpleDialog(BuildContext context, String title, String content) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
+      backgroundColor: cardDark, // Dark theme
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24),
@@ -720,7 +844,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _showDeleteAccountDialog(BuildContext context, AuthService auth) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2A2A2A), // Dark theme
+      backgroundColor: cardDark, // Dark theme
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(

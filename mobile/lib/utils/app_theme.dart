@@ -102,7 +102,7 @@ class AppTheme {
   // App ThemeData
   static ThemeData get themeData => ThemeData(
     primaryColor: primaryOrange,
-    scaffoldBackgroundColor: bgDark,
+    scaffoldBackgroundColor: const Color(0xFF000000),
     colorScheme: const ColorScheme.dark(
       primary: primaryOrange,
       secondary: lightOrange,

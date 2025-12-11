@@ -1,7 +1,7 @@
 name: voo_citizen_app
 description: VOO Citizen App - Report community issues with photos
 publish_to: 'none'
-version: 7.0.0+70
+version: 10.0.0+97
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -28,6 +28,8 @@ dependencies:
   dio: ^5.9.0
   open_filex: ^4.7.0
   path_provider: ^2.1.3
+  crypto: ^3.0.3
+
 
 dev_dependencies:
   flutter_test:

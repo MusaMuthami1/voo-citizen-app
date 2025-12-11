@@ -1,7 +1,18 @@
 import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-/// Simplified Supabase service using direct REST API calls
+/// Debug logger - only prints in debug mode
+void _debugLog(String message) {
+  if (kDebugMode) {
+    // ignore: avoid_print
+    debugPrint(message);
+  }
+}
+
+/// Supabase service with hardened authentication
 class SupabaseService {
   static const String supabaseUrl = 'https://xzhmdxtzpuxycvsatjoe.supabase.co';
   static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6aG1keHR6cHV4eWN2c2F0am9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNTYwNzAsImV4cCI6MjA4MDczMjA3MH0.2tZ7eu6DtBg2mSOitpRa4RNvgCGg3nvMWeDmn9fPJY0';
@@ -17,8 +28,38 @@ class SupabaseService {
     // No initialization needed for REST API approach
   }
 
-  // Simple hash function for password verification
-  static String hashPassword(String password) {
+  // ============ SECURE PASSWORD HASHING ============
+  
+  /// Generate a random salt
+  static String _generateSalt() {
+    final random = Random.secure();
+    final saltBytes = List<int>.generate(16, (_) => random.nextInt(256));
+    return base64Encode(saltBytes);
+  }
+
+  /// Hash password with SHA-256 and salt
+  static String _hashPassword(String password, String salt) {
+    final saltedPassword = '$salt:$password';
+    final bytes = utf8.encode(saltedPassword);
+    final digest = sha256.convert(bytes);
+    return '$salt:${digest.toString()}';
+  }
+
+  /// Verify password against stored hash
+  static bool _verifyPassword(String password, String storedHash) {
+    if (!storedHash.contains(':')) {
+      // Legacy hash (old format) - for backwards compatibility
+      return _legacyHashPassword(password) == storedHash;
+    }
+    final parts = storedHash.split(':');
+    if (parts.length < 2) return false;
+    final salt = parts[0];
+    final expectedHash = _hashPassword(password, salt);
+    return expectedHash == storedHash;
+  }
+
+  /// Legacy hash for backwards compatibility with existing users
+  static String _legacyHashPassword(String password) {
     var hash = 0;
     for (var i = 0; i < password.length; i++) {
       hash = ((hash << 5) - hash) + password.codeUnitAt(i);
@@ -35,18 +76,58 @@ class SupabaseService {
     required String idNumber,
     required String password,
     String? village,
+    String? username,
   }) async {
     try {
-      // Check if user exists
-      final checkUrl = '$supabaseUrl/rest/v1/app_users?or=(phone.eq.$phone,id_number.eq.$idNumber)&select=id';
-      final checkRes = await http.get(Uri.parse(checkUrl), headers: _headers);
+      // Validate inputs
+      if (fullName.trim().isEmpty) {
+        return {'success': false, 'error': 'Full name is required'};
+      }
+      if (phone.trim().isEmpty) {
+        return {'success': false, 'error': 'Phone number is required'};
+      }
+      if (password.length < 6) {
+        return {'success': false, 'error': 'Password must be at least 6 characters'};
+      }
+
+      // Format phone
+      String formattedPhone = phone.trim();
+      if (!formattedPhone.startsWith('+')) {
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = '+254${formattedPhone.substring(1)}';
+        } else if (!formattedPhone.startsWith('254')) {
+          formattedPhone = '+254$formattedPhone';
+        } else {
+          formattedPhone = '+$formattedPhone';
+        }
+      }
+
+      // Check if user exists by phone OR national ID
+      final checkUrl = Uri.parse('$supabaseUrl/rest/v1/app_users')
+          .replace(queryParameters: {
+            'or': '(phone.eq.$formattedPhone,id_number.eq.$idNumber)',
+            'select': 'id,phone,id_number',
+          });
+      
+      final checkRes = await http.get(checkUrl, headers: _headers);
       
       if (checkRes.statusCode == 200) {
         final existing = jsonDecode(checkRes.body);
         if (existing is List && existing.isNotEmpty) {
-          return {'success': false, 'error': 'Phone or ID already registered'};
+          final existingUser = existing.first;
+          if (existingUser['phone'] == formattedPhone) {
+            return {'success': false, 'error': 'Phone number already registered'};
+          }
+          if (existingUser['id_number'] == idNumber) {
+            return {'success': false, 'error': 'National ID already registered'};
+          }
+          return {'success': false, 'error': 'User already exists'};
         }
       }
+
+      // Generate secure password hash with salt
+      final salt = _generateSalt();
+      final passwordHash = _hashPassword(password, salt);
 
       // Insert new user
       final insertUrl = '$supabaseUrl/rest/v1/app_users';
@@ -54,31 +135,38 @@ class SupabaseService {
         Uri.parse(insertUrl),
         headers: _headers,
         body: jsonEncode({
-          'full_name': fullName,
-          'phone': phone,
-          'id_number': idNumber,
-          'password_hash': hashPassword(password),
-          'village': village,
+          'full_name': fullName.trim(),
+          'phone': formattedPhone,
+          'id_number': idNumber.trim(),
+          'password_hash': passwordHash,
+          'village': village?.trim(),
+          'username': username?.trim() ?? formattedPhone.replaceAll('+254', ''),
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         }),
       );
 
       if (insertRes.statusCode == 201) {
         final user = jsonDecode(insertRes.body);
         final userData = user is List ? user.first : user;
+        _debugLog('✅ Registration SUCCESS - User ID: ${userData['id']}, Username: ${userData['username']}, Phone: ${userData['phone']}');
         return {
           'success': true,
+          'message': 'Registration successful',
           'user': {
             'id': userData['id'],
             'fullName': userData['full_name'],
             'phone': userData['phone'],
-            'issuesReported': 0,
+            'username': userData['username'] ?? formattedPhone.replaceAll('+254', ''),
+            'village': userData['village'],
           }
         };
       } else {
-        return {'success': false, 'error': 'Registration failed: ${insertRes.body}'};
+        _debugLog('❌ Registration FAILED: ${insertRes.statusCode} - ${insertRes.body}');
+        return {'success': false, 'error': 'Registration failed. Please try again.'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Registration failed: $e'};
+      _debugLog('❌ Registration exception: $e');
+      return {'success': false, 'error': 'Network error. Please check your connection.'};
     }
   }
 
@@ -87,35 +175,103 @@ class SupabaseService {
     required String password,
   }) async {
     try {
-      final url = '$supabaseUrl/rest/v1/app_users?phone=eq.$phone&select=*';
-      final res = await http.get(Uri.parse(url), headers: _headers);
-
-      if (res.statusCode == 200) {
-        final users = jsonDecode(res.body);
-        if (users is List && users.isEmpty) {
-          return {'success': false, 'error': 'User not found'};
-        }
-
-        final user = users.first;
-        if (user['password_hash'] != hashPassword(password)) {
-          return {'success': false, 'error': 'Invalid password'};
-        }
-
-        return {
-          'success': true,
-          'user': {
-            'id': user['id'],
-            'fullName': user['full_name'],
-            'phone': user['phone'],
-            'issuesReported': user['issues_reported'] ?? 0,
-            'issuesResolved': user['issues_resolved'] ?? 0,
+      final inputValue = phone.trim();
+      _debugLog('🔐 Login attempt with input: $inputValue');
+      
+      // Check if input looks like a phone number (starts with +, 0, or is all digits)
+      final isPhoneNumber = inputValue.startsWith('+') || 
+                            inputValue.startsWith('0') ||
+                            inputValue.startsWith('254') ||
+                            RegExp(r'^\d{9,}$').hasMatch(inputValue);
+      
+      String? formattedPhone;
+      if (isPhoneNumber) {
+        formattedPhone = inputValue;
+        if (!formattedPhone.startsWith('+')) {
+          if (formattedPhone.startsWith('0')) {
+            formattedPhone = '+254${formattedPhone.substring(1)}';
+          } else if (formattedPhone.startsWith('254')) {
+            formattedPhone = '+$formattedPhone';
+          } else {
+            formattedPhone = '+254$formattedPhone';
           }
-        };
+        }
+        _debugLog('🔐 Looking for phone: $formattedPhone');
       } else {
-        return {'success': false, 'error': 'Login failed'};
+        _debugLog('🔐 Looking for username: $inputValue');
       }
+
+      // Try to find user by phone first (if it's a phone number)
+      List users = [];
+      if (formattedPhone != null) {
+        var url = Uri.parse('$supabaseUrl/rest/v1/app_users')
+            .replace(queryParameters: {
+              'phone': 'eq.$formattedPhone',
+              'select': '*',
+            });
+        
+        var res = await http.get(url, headers: _headers);
+        users = jsonDecode(res.body);
+        _debugLog('🔐 Phone lookup result: ${users.length} users found');
+      }
+
+      // If no user found by phone, try username
+      if (users.isEmpty) {
+        _debugLog('🔐 Trying username lookup...');
+        var url = Uri.parse('$supabaseUrl/rest/v1/app_users')
+            .replace(queryParameters: {
+              'username': 'eq.$inputValue',
+              'select': '*',
+            });
+        var res = await http.get(url, headers: _headers);
+        users = jsonDecode(res.body);
+        _debugLog('🔐 Username lookup result: ${users.length} users found');
+      }
+
+      // Fallback: try full_name (case-insensitive) if username not found
+      if (users.isEmpty) {
+        _debugLog('🔐 Trying full_name fallback lookup...');
+        var url = Uri.parse('$supabaseUrl/rest/v1/app_users')
+            .replace(queryParameters: {
+              'full_name': 'ilike.$inputValue',
+              'select': '*',
+            });
+        var res = await http.get(url, headers: _headers);
+        users = jsonDecode(res.body);
+        _debugLog('🔐 Full name lookup result: ${users.length} users found');
+      }
+
+      if (users.isEmpty) {
+        _debugLog('❌ No user found with phone $formattedPhone, username $inputValue, or full_name');
+        return {'success': false, 'error': 'User not found. Please register first.'};
+      }
+
+      final user = users.first;
+      _debugLog('✅ User found: ${user['username']} / ${user['phone']}');
+      final storedHash = user['password_hash'] ?? '';
+      
+      if (!_verifyPassword(password, storedHash)) {
+        _debugLog('❌ Password verification failed');
+        return {'success': false, 'error': 'Invalid password'};
+      }
+
+      _debugLog('✅ Login SUCCESS for user: ${user['username']}');
+      return {
+        'success': true,
+        'user': {
+          'id': user['id'],
+          'fullName': user['full_name'],
+          'phone': user['phone'],
+          'username': user['username'],
+          'village': user['village'],
+          'email': user['email'],
+          'issuesReported': user['issues_reported'] ?? 0,
+          'issuesResolved': user['issues_resolved'] ?? 0,
+        }
+      };
     } catch (e) {
-      return {'success': false, 'error': 'Login failed: $e'};
+      _debugLog('❌ Login exception: $e');
+      return {'success': false, 'error': 'Network error. Please check your connection.'};
     }
   }
 
@@ -126,9 +282,23 @@ class SupabaseService {
     required String newPassword,
   }) async {
     try {
-      // First find the user
-      final findUrl = '$supabaseUrl/rest/v1/app_users?phone=eq.$phone&select=id';
-      final findRes = await http.get(Uri.parse(findUrl), headers: _headers);
+      if (newPassword.length < 6) {
+        return {'success': false, 'error': 'Password must be at least 6 characters'};
+      }
+
+      // Format phone
+      String formattedPhone = phone.trim();
+      if (!formattedPhone.startsWith('+254')) {
+        formattedPhone = '+254$formattedPhone';
+      }
+
+      // Find the user
+      final findUrl = Uri.parse('$supabaseUrl/rest/v1/app_users')
+          .replace(queryParameters: {
+            'phone': 'eq.$formattedPhone',
+            'select': 'id',
+          });
+      final findRes = await http.get(findUrl, headers: _headers);
       
       if (findRes.statusCode == 200) {
         final users = jsonDecode(findRes.body);
@@ -138,16 +308,20 @@ class SupabaseService {
         
         final userId = users.first['id'];
         
+        // Generate new secure hash
+        final salt = _generateSalt();
+        final passwordHash = _hashPassword(newPassword, salt);
+        
         // Update the password
         final updateUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
         final updateRes = await http.patch(
           Uri.parse(updateUrl),
           headers: _headers,
-          body: jsonEncode({'password_hash': hashPassword(newPassword)}),
+          body: jsonEncode({'password_hash': passwordHash}),
         );
         
         if (updateRes.statusCode == 200 || updateRes.statusCode == 204) {
-          return {'success': true};
+          return {'success': true, 'message': 'Password updated successfully'};
         } else {
           return {'success': false, 'error': 'Failed to update password'};
         }
@@ -156,6 +330,119 @@ class SupabaseService {
       }
     } catch (e) {
       return {'success': false, 'error': 'Password reset failed: $e'};
+    }
+  }
+
+  /// SECURE password reset - requires both phone AND ID verification
+  static Future<Map<String, dynamic>> updatePasswordWithVerification({
+    required String phone,
+    required String idNumber,
+    required String newPassword,
+  }) async {
+    try {
+      if (newPassword.length < 6) {
+        return {'success': false, 'error': 'Password must be at least 6 characters'};
+      }
+      if (idNumber.trim().isEmpty) {
+        return {'success': false, 'error': 'National ID is required for verification'};
+      }
+
+      // Format phone
+      String formattedPhone = phone.trim();
+      if (!formattedPhone.startsWith('+254')) {
+        formattedPhone = '+254$formattedPhone';
+      }
+
+      // Find the user by BOTH phone AND ID number
+      final findUrl = Uri.parse('$supabaseUrl/rest/v1/app_users')
+          .replace(queryParameters: {
+            'phone': 'eq.$formattedPhone',
+            'id_number': 'eq.${idNumber.trim()}',
+            'select': 'id,phone,id_number',
+          });
+      final findRes = await http.get(findUrl, headers: _headers);
+      
+      if (findRes.statusCode == 200) {
+        final users = jsonDecode(findRes.body);
+        if (users is List && users.isEmpty) {
+          // Don't reveal if phone exists - security best practice
+          return {'success': false, 'error': 'Phone and ID do not match. Please check your details.'};
+        }
+        
+        final userId = users.first['id'];
+        
+        // Generate new secure hash
+        final salt = _generateSalt();
+        final passwordHash = _hashPassword(newPassword, salt);
+        
+        // Update the password
+        final updateUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
+        final updateRes = await http.patch(
+          Uri.parse(updateUrl),
+          headers: _headers,
+          body: jsonEncode({'password_hash': passwordHash}),
+        );
+        
+        if (updateRes.statusCode == 200 || updateRes.statusCode == 204) {
+          _debugLog('✅ Password reset successful for user $userId');
+          return {'success': true, 'message': 'Password updated successfully'};
+        } else {
+          return {'success': false, 'error': 'Failed to update password'};
+        }
+      } else {
+        return {'success': false, 'error': 'Verification failed'};
+      }
+    } catch (e) {
+      _debugLog('❌ Password reset error: $e');
+      return {'success': false, 'error': 'Password reset failed: $e'};
+    }
+  }
+
+  // ============ PROFILE UPDATE ============
+
+  static Future<Map<String, dynamic>> updateUserProfile({
+    required String userId,
+    required String fullName,
+    required String phone,
+    String? email,
+    String? village,
+  }) async {
+    try {
+      final updateUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
+      final updateRes = await http.patch(
+        Uri.parse(updateUrl),
+        headers: _headers,
+        body: jsonEncode({
+          'full_name': fullName,
+          'phone': phone,
+          if (email != null) 'email': email,
+          if (village != null) 'village': village,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }),
+      );
+
+      if (updateRes.statusCode == 200 || updateRes.statusCode == 204) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': 'Update failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Update failed: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteUser(String userId) async {
+    try {
+      final deleteUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
+      final deleteRes = await http.delete(Uri.parse(deleteUrl), headers: _headers);
+
+      if (deleteRes.statusCode == 200 || deleteRes.statusCode == 204) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'error': 'Delete failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Delete failed: $e'};
     }
   }
 
@@ -204,45 +491,38 @@ class SupabaseService {
     }
   }
 
-  static Future<Map<String, dynamic>> createIssue({
+  static Future<Map<String, dynamic>> submitIssue({
     required String userId,
-    required String userPhone,
     required String title,
-    required String description,
     required String category,
-    String? urgency,
-    List<String>? images,
-    Map<String, dynamic>? location,
+    required String description,
+    String? location,
+    List<String>? imageUrls,
   }) async {
     try {
-      final issueNumber = 'VOO-${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
-      
       final url = '$supabaseUrl/rest/v1/issues';
       final res = await http.post(
         Uri.parse(url),
         headers: _headers,
         body: jsonEncode({
-          'issue_number': issueNumber,
           'user_id': userId,
-          'user_phone': userPhone,
           'title': title,
-          'description': description,
           'category': category,
-          'urgency': urgency ?? 'medium',
-          'images': images ?? [],
+          'description': description,
           'location': location,
+          'image_urls': imageUrls,
           'status': 'pending',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         }),
       );
 
       if (res.statusCode == 201) {
-        final issue = jsonDecode(res.body);
-        return {'success': true, 'issue': issue is List ? issue.first : issue, 'issueNumber': issueNumber};
+        return {'success': true, 'issue': jsonDecode(res.body)};
       } else {
-        return {'success': false, 'error': 'Failed to create issue'};
+        return {'success': false, 'error': 'Failed to submit issue'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Failed to create issue: $e'};
+      return {'success': false, 'error': 'Submit failed: $e'};
     }
   }
 
@@ -261,14 +541,14 @@ class SupabaseService {
     }
   }
 
-  static Future<Map<String, dynamic>> applyForBursary({
+  static Future<Map<String, dynamic>> submitBursaryApplication({
     required String userId,
     required String institutionName,
     required String course,
     required String yearOfStudy,
     String? institutionType,
-    String? reason,
     double? amountRequested,
+    String? reason,
   }) async {
     try {
       final url = '$supabaseUrl/rest/v1/bursary_applications';
@@ -281,94 +561,40 @@ class SupabaseService {
           'course': course,
           'year_of_study': yearOfStudy,
           'institution_type': institutionType,
-          'reason': reason,
           'amount_requested': amountRequested,
+          'reason': reason,
           'status': 'pending',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         }),
       );
 
       if (res.statusCode == 201) {
-        final app = jsonDecode(res.body);
-        return {'success': true, 'application': app is List ? app.first : app};
+        return {'success': true, 'application': jsonDecode(res.body)};
       } else {
-        return {'success': false, 'error': 'Application failed'};
+        return {'success': false, 'error': 'Failed to submit application'};
       }
     } catch (e) {
-      return {'success': false, 'error': 'Application failed: $e'};
-    }
-  }
-  static Future<Map<String, dynamic>> updateUserProfile({
-    required String userId,
-    String? fullName,
-    String? phone,
-    String? email,
-    String? village,
-  }) async {
-    try {
-      final url = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
-      
-      final Map<String, dynamic> updates = {};
-      if (fullName != null) updates['full_name'] = fullName;
-      if (phone != null) updates['phone'] = phone;
-      if (email != null) updates['email'] = email;
-      if (village != null) updates['village'] = village;
-
-      if (updates.isEmpty) {
-        return {'success': true}; // No changes needed
-      }
-
-      final res = await http.patch(
-        Uri.parse(url),
-        headers: _headers,
-        body: jsonEncode(updates),
-      );
-
-      if (res.statusCode == 200 || res.statusCode == 204) {
-         // Fetch updated user to return
-         final getUrl = '$supabaseUrl/rest/v1/app_users?id=eq.$userId&select=*';
-         final getRes = await http.get(Uri.parse(getUrl), headers: _headers);
-         
-         if (getRes.statusCode == 200) {
-            final users = jsonDecode(getRes.body);
-            if (users is List && users.isNotEmpty) {
-               final user = users.first;
-               return {
-                  'success': true,
-                  'user': {
-                    'id': user['id'],
-                    'fullName': user['full_name'],
-                    'phone': user['phone'],
-                    'email': user['email'], // Ensure email is handled if column exists, else might be null
-                    'village': user['village'],
-                    'issuesReported': user['issues_reported'] ?? 0,
-                  }
-               };
-            }
-         }
-        return {'success': true}; 
-      } else {
-        return {'success': false, 'error': 'Update failed: ${res.body}'};
-      }
-    } catch (e) {
-      return {'success': false, 'error': 'Update failed: $e'};
+      return {'success': false, 'error': 'Submit failed: $e'};
     }
   }
 
-  static Future<Map<String, dynamic>> deleteUser(String userId) async {
-    try {
-      final url = '$supabaseUrl/rest/v1/app_users?id=eq.$userId';
-      final res = await http.delete(
-        Uri.parse(url),
-        headers: _headers,
-      );
+  // ============ APP CONFIG ============
 
-      if (res.statusCode == 200 || res.statusCode == 204) {
-        return {'success': true};
-      } else {
-        return {'success': false, 'error': 'Failed to delete account'};
+  static Future<Map<String, dynamic>> getAppConfig() async {
+    try {
+      final url = '$supabaseUrl/rest/v1/app_config?select=*';
+      final res = await http.get(Uri.parse(url), headers: _headers);
+      if (res.statusCode == 200) {
+        final configs = jsonDecode(res.body) as List;
+        final configMap = <String, dynamic>{};
+        for (final config in configs) {
+          configMap[config['key']] = config['value'];
+        }
+        return configMap;
       }
+      return {};
     } catch (e) {
-      return {'success': false, 'error': 'Delete failed: $e'};
+      return {};
     }
   }
 }

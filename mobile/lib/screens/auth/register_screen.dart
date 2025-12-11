@@ -23,7 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _showOtpCopyBox = false;
   
   // Dark Orange Theme Colors (matching mockups exactly)
-  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color bgDark = Color(0xFF000000); // Pure Black
   static const Color cardDark = Color(0xFF2A2A2A);
   static const Color primaryOrange = Color(0xFFFF8C00);
   static const Color textLight = Color(0xFFFFFFFF);
@@ -386,31 +386,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (!_otpSent) ...[
             _buildOrangeButton(_isLoading ? 'Sending...' : 'Send OTP', _isLoading ? null : _sendOtp),
           ] else ...[
-            // Show generated OTP in glass box for copying (matching mockup)
+            // Show generated OTP in compact glass box (auto-hides when typing)
             if (_showOtpCopyBox) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  color: primaryOrange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryOrange.withOpacity(0.3)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.content_copy, color: primaryOrange, size: 20),
-                    const SizedBox(width: 12),
-                    Text(
-                      _generatedOtp,
-                      style: const TextStyle(
-                        color: primaryOrange,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 8,
-                      ),
+              AnimatedOpacity(
+                opacity: _showOtpCopyBox ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        primaryOrange.withOpacity(0.15),
+                        primaryOrange.withOpacity(0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: primaryOrange.withOpacity(0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryOrange.withOpacity(0.1),
+                        blurRadius: 8,
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.key, color: primaryOrange.withOpacity(0.8), size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        _generatedOtp,
+                        style: const TextStyle(
+                          color: primaryOrange,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 4,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -447,6 +466,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (v) {
+                    // Auto-hide OTP copy box when user starts typing
+                    if (_showOtpCopyBox && v.isNotEmpty) {
+                      setState(() => _showOtpCopyBox = false);
+                    }
                     if (v.isNotEmpty && i < 5) {
                       _otpFocusNodes[i + 1].requestFocus();
                     }

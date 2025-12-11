@@ -11,8 +11,9 @@ import 'supabase_service.dart';
 /// Service to check for app updates and FORCE users to update
 class AppUpdateService {
   // Current app version - UPDATE THIS when releasing new versions
-  static const String currentVersion = '9.5.0';
-  static const int currentVersionCode = 95;
+  static const String currentVersion = '9.5.1';
+  static const int currentVersionCode = 96;
+
   
   // GitHub releases URL
   static const String githubReleasesUrl = 'https://github.com/MuthamiM/voo-citizen-app/releases';

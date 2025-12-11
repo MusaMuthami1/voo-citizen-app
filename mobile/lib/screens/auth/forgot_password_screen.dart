@@ -50,8 +50,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     // Generate new password
     final newPassword = PasswordGenerator.generate(length: 12);
 
-    // Update in Supabase
-    final result = await SupabaseService.updatePassword(phone: phone, newPassword: newPassword);
+    // Update in Supabase (with ID verification)
+    final result = await SupabaseService.updatePasswordWithVerification(
+      phone: phone, 
+      idNumber: _idController.text.trim(),
+      newPassword: newPassword,
+    );
 
     if (mounted) {
       setState(() => _isLoading = false);

@@ -19,138 +19,139 @@ class _BursaryScreenState extends State<BursaryScreen> {
   bool _showForm = false;
   int _currentStep = 0;
   bool _isSubmitting = false;
-
-  // Theme colors
-  static const Color primaryOrange = Color(0xFFFF8C00);
-  static const Color lightPink = Color(0xFFFFB347); // Now Light Orange
-  static const Color bgDark = Color(0xFF1A1A1A);
-  static const Color textLight = Color(0xFFFFFFFF);
-  static const Color textMuted = Color(0xFF888888);
-  static const Color cardDark = Color(0xFF2A2A2A);
-  static const Color inputBg = Color(0xFF333333);
-
-  // Form controllers
-  final _institutionController = TextEditingController();
-  final _admissionController = TextEditingController();
-  final _courseController = TextEditingController();
-  final _yearController = TextEditingController(text: '1');
-  final _annualFeesController = TextEditingController();
-  final _guardianNameController = TextEditingController();
-  final _guardianPhoneController = TextEditingController();
-  final _reasonController = TextEditingController();
-  final _sponsorshipDetailsController = TextEditingController();
-  
-  bool _hasHelb = false;
-  bool _hasGoKSponsorship = false;
   String _institutionType = 'university';
   String _guardianRelation = 'parent';
 
+  // Theme colors
+  static const Color primaryOrange = Color(0xFFFF8C00);
+  static const Color bgDark = Color(0xFF000000); // Pure Black
+  static const Color cardDark = Color(0xFF1C1C1C); // Dark Gray
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textMuted = Color(0xFF888888);
+  static const Color inputBg = Color(0xFF2A2A2A); // Matches ReportIssue
+
+  // Controllers
+  final _institutionController = TextEditingController();
+  final _admissionController = TextEditingController();
+  final _courseController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _annualFeesController = TextEditingController();
+  final _sponsorshipDetailsController = TextEditingController();
+  final _guardianNameController = TextEditingController();
+  final _guardianPhoneController = TextEditingController();
+  final _reasonController = TextEditingController();
+  
+  bool _hasHelb = false;
+  bool _hasGoKSponsorship = false;
+  
   final List<String> _institutions = [
-    'University of Nairobi', 'Kenyatta University', 'Moi University',
-    'Jomo Kenyatta University', 'Egerton University', 'Maseno University',
-    'Technical University of Kenya', 'Mt Kenya University', 'Strathmore University',
-    'USIU Africa', 'KCA University', 'Machakos University', 'KMTC', 'Other'
+    'University of Nairobi',
+    'Kenyatta University',
+    'JKUAT',
+    'Moi University',
+    'Egerton University',
+    'Maseno University',
+    'Other'
   ];
+
+  @override
+  void dispose() {
+    _institutionController.dispose();
+    _admissionController.dispose();
+    _courseController.dispose();
+    _yearController.dispose();
+    _annualFeesController.dispose();
+    _sponsorshipDetailsController.dispose();
+    _guardianNameController.dispose();
+    _guardianPhoneController.dispose();
+    _reasonController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadApplications());
+    _loadApplications();
   }
 
   Future<void> _loadApplications() async {
-    final auth = context.read<AuthService>();
-    final userId = auth.user?['id']?.toString();
-    if (userId == null || userId.isEmpty) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
-
-    final cachedApps = StorageService.getCachedBursaries();
-    if (cachedApps.isNotEmpty && mounted) {
-      setState(() { _applications = cachedApps; _isLoading = false; });
+    setState(() => _isLoading = true);
+    
+    // Check if online first
+    final isOnline = await StorageService.isOnline();
+    if (!isOnline) {
+       setState(() => _isLoading = false);
+       return;
     }
 
     try {
-      if (await StorageService.isOnline()) {
-        var loadedApps = await DashboardService.getMyBursaryApplications();
-        if (loadedApps.isEmpty && userId.isNotEmpty) {
-          loadedApps = await SupabaseService.getMyBursaryApplications(userId);
-        }
-        if (mounted) {
-          setState(() { _applications = loadedApps; _isLoading = false; });
-          await StorageService.cacheBursaries(loadedApps);
-        }
+      final apps = await DashboardService.getMyBursaryApplications();
+      if (mounted) {
+        setState(() {
+          _applications = apps;
+        });
       }
     } catch (e) {
-      if (mounted && _applications.isEmpty) setState(() => _isLoading = false);
+      debugPrint('Error loading bursaries: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _nextStep() {
-    if (_currentStep < 3) setState(() => _currentStep++);
+    if (_currentStep < 3) {
+      setState(() => _currentStep++);
+    }
   }
 
   void _prevStep() {
-    if (_currentStep > 0) setState(() => _currentStep--);
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
   }
 
   Future<void> _submitApplication() async {
-    if (_institutionController.text.isEmpty || _courseController.text.isEmpty || _reasonController.text.isEmpty) {
-      _showError('Please fill all required fields');
+    if (_institutionController.text.isEmpty || _annualFeesController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields'), backgroundColor: Color(0xFFEF4444)));
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final auth = context.read<AuthService>();
-      final verboseReason = '''
-${_reasonController.text}
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final user = authService.user;
+      final userId = user?['id']?.toString() ?? user?['userId']?.toString();
+      final phone = user?['phone']?.toString();
+      final name = user?['full_name'] ?? user?['fullName'] ?? '';
 
-Additional Details:
-Admission: ${_admissionController.text}
-Fees: ${_annualFeesController.text}
-Guardian: ${_guardianNameController.text} (${_guardianRelation}) - ${_guardianPhoneController.text}
-HELB: ${_hasHelb ? 'Yes' : 'No'}
-Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '(${_sponsorshipDetailsController.text})' : ''}
-''';
-
-      var result = await DashboardService.applyForBursary(
+      await DashboardService.applyForBursary(
         institutionName: _institutionController.text,
         course: _courseController.text,
         yearOfStudy: _yearController.text,
         institutionType: _institutionType,
-        reason: verboseReason,
-        amountRequested: double.tryParse(_annualFeesController.text.replaceAll(',', '')),
-        phoneNumber: auth.user?['phone'],
-        userId: auth.user?['id']?.toString(),
-        fullName: auth.user?['fullName'],
+        reason: _reasonController.text,
+        amountRequested: double.tryParse(_annualFeesController.text) ?? 0,
+        phoneNumber: phone,
+        userId: userId,
+        fullName: name,
       );
-      
-      // Fallback to Supabase if dashboard fails
-      if (result['success'] != true && auth.user != null) {
-        result = await SupabaseService.applyForBursary(
-          userId: auth.user!['id'].toString(),
-          institutionName: _institutionController.text,
-          institutionType: _institutionType,
-          course: _courseController.text,
-          yearOfStudy: _yearController.text,
-          amountRequested: double.tryParse(_annualFeesController.text.replaceAll(',', '')),
-          reason: verboseReason,
-        );
-      }
 
-      if (result['success'] == true) {
-        _showSuccess('Application submitted!');
-        setState(() { _showForm = false; _currentStep = 0; _clearForm(); _loadApplications(); });
-      } else {
-        throw Exception(result['error'] ?? 'Failed to submit');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Application Submitted Successfully!'), backgroundColor: Color(0xFF10B981)));
+        setState(() {
+          _showForm = false;
+          _currentStep = 0;
+          _clearForm();
+        });
+        _loadApplications();
       }
     } catch (e) {
-      _showError('Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFEF4444)));
+      }
     } finally {
-      setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -158,33 +159,20 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
     _institutionController.clear();
     _admissionController.clear();
     _courseController.clear();
-    _yearController.text = '1';
+    _yearController.clear();
     _annualFeesController.clear();
+    _sponsorshipDetailsController.clear();
     _guardianNameController.clear();
     _guardianPhoneController.clear();
     _reasonController.clear();
-    _sponsorshipDetailsController.clear();
-    _hasHelb = false;
-    _hasGoKSponsorship = false;
-  }
-
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: const Color(0xFFD4635B), behavior: SnackBarBehavior.floating),
-    );
-  }
-
-  void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF4CAF50), behavior: SnackBarBehavior.floating),
-    );
   }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'approved': return const Color(0xFF4CAF50);
-      case 'denied': return const Color(0xFFEF4444);
-      default: return const Color(0xFFF59E0B);
+      case 'approved': return const Color(0xFF10B981); // Green
+      case 'rejected': return const Color(0xFFEF4444); // Red
+      case 'pending': return const Color(0xFFF59E0B); // Orange
+      default: return const Color(0xFF888888); // Grey
     }
   }
 
@@ -193,15 +181,12 @@ Other Sponsorship: ${_hasGoKSponsorship ? 'Yes' : 'No'} ${_hasGoKSponsorship ? '
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      backgroundColor: bgDark,
       body: Stack(
         children: [
-          // Background
+          // Background - Pure Black, no blobs
           Container(width: size.width, height: size.height, color: bgDark),
           
-          // Decorative circles
-          Positioned(top: -40, right: -60, child: _buildCircle(180, primaryOrange.withOpacity(0.4))),
-          Positioned(top: 120, left: -40, child: _buildCircle(120, lightPink.withOpacity(0.5))),
-
           // Content
           SafeArea(
             child: Column(

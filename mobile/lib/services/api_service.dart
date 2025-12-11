@@ -28,8 +28,7 @@ class ApiService {
     } catch (e) {
       // ignore
     }
-    return ['Damaged Roads', 'Broken Streetlights', 'Water/Sanitation',
-      'School Infrastructure', 'Healthcare Facilities', 'Security Concerns', 'Other'];
+    return ['Roads', 'Water', 'Electricity', 'Waste Management', 'Public Safety', 'Other'];
   }
 
   // Get my issues

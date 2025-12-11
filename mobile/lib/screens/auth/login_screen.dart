@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // Dark Orange Theme Colors
-  static const Color bgDark = Color(0xFF1A1A1A);
+  static const Color bgDark = Color(0xFF000000); // Pure Black
   static const Color cardDark = Color(0xFF2A2A2A);
   static const Color primaryOrange = Color(0xFFFF8C00);
   static const Color lightOrange = Color(0xFFFFB347);
