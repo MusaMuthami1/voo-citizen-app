@@ -365,8 +365,7 @@ class _BursaryScreenState extends State<BursaryScreen> {
           ),
           const SizedBox(height: 16),
         ],
-        _buildTypeSelector(),
-        const SizedBox(height: 16),
+        // Institution type removed per user request - defaults to 'university'
         _buildTextField(_admissionController, 'Admission Number', Icons.badge_outlined),
         const SizedBox(height: 16),
         _buildTextField(_courseController, 'Course Name', Icons.book_outlined),
