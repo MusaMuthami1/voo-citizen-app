@@ -88,6 +88,35 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
     return status.replaceAll('_', ' ').toUpperCase();
   }
 
+  Future<void> _deleteIssue(String issueId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cardBg,
+        title: const Text('Delete Issue?', style: TextStyle(color: Colors.white)),
+        content: const Text('This will permanently remove this resolved issue.', style: TextStyle(color: textMuted)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: textMuted))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    
+    if (confirm != true) return;
+    
+    final result = await DashboardService.deleteIssue(issueId);
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Issue deleted successfully'), backgroundColor: Colors.green),
+      );
+      _loadIssues();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Delete failed'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,16 +270,29 @@ class _MyIssuesScreenState extends State<MyIssuesScreen> {
                                                       maxLines: 1, overflow: TextOverflow.ellipsis,
                                                     ),
                                                     const SizedBox(height: 8),
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                      decoration: BoxDecoration(
-                                                        color: _getStatusColor(status).withOpacity(0.2),
-                                                        borderRadius: BorderRadius.circular(20),
-                                                      ),
-                                                      child: Text(
-                                                        _getStatusLabel(status),
-                                                        style: TextStyle(color: _getStatusColor(status), fontSize: 11, fontWeight: FontWeight.w600),
-                                                      ),
+                                                    Row(
+                                                      children: [
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                          decoration: BoxDecoration(
+                                                            color: _getStatusColor(status).withOpacity(0.2),
+                                                            borderRadius: BorderRadius.circular(20),
+                                                          ),
+                                                          child: Text(
+                                                            _getStatusLabel(status),
+                                                            style: TextStyle(color: _getStatusColor(status), fontSize: 11, fontWeight: FontWeight.w600),
+                                                          ),
+                                                        ),
+                                                        // Delete button for resolved issues
+                                                        if (status.toLowerCase() == 'resolved')
+                                                          Padding(
+                                                            padding: const EdgeInsets.only(left: 8),
+                                                            child: GestureDetector(
+                                                              onTap: () => _deleteIssue(issue['id']?.toString() ?? issue['_id']?.toString() ?? ''),
+                                                              child: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                                            ),
+                                                          ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),

@@ -270,6 +270,23 @@ class DashboardService {
     }
   }
 
+  /// Delete issue (for resolved issues)
+  static Future<Map<String, dynamic>> deleteIssue(String issueId) async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$dashboardUrl/api/admin/issues/$issueId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return {'success': data['success'] ?? true};
+      }
+      return {'success': false, 'error': 'Delete failed (${res.statusCode})'};
+    } catch (e) {
+      return {'success': false, 'error': 'Delete failed: $e'};
+    }
+  }
+
 
   // ============ BURSARY ============
   
