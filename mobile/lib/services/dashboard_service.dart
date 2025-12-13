@@ -273,17 +273,39 @@ class DashboardService {
   /// Delete issue (for resolved issues)
   static Future<Map<String, dynamic>> deleteIssue(String issueId) async {
     try {
+      print('[DashboardService] Deleting issue: $issueId');
+      
+      if (issueId.isEmpty) {
+        print('[DashboardService] ERROR: Empty issue ID');
+        return {'success': false, 'error': 'Invalid issue ID'};
+      }
+      
+      final url = '$apiBase/mobile/issues/$issueId';
+      print('[DashboardService] DELETE URL: $url');
+      
       final res = await http.delete(
-        Uri.parse('$apiBase/mobile/issues/$issueId'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       );
+      
+      print('[DashboardService] Delete response: ${res.statusCode} - ${res.body}');
+      
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         return {'success': data['success'] ?? true};
+      } else if (res.statusCode == 404) {
+        return {'success': false, 'error': 'Issue not found or already deleted'};
+      } else {
+        try {
+          final data = jsonDecode(res.body);
+          return {'success': false, 'error': data['error'] ?? 'Delete failed (${res.statusCode})'};
+        } catch (_) {
+          return {'success': false, 'error': 'Delete failed (${res.statusCode})'};
+        }
       }
-      return {'success': false, 'error': 'Delete failed (${res.statusCode})'};
     } catch (e) {
-      return {'success': false, 'error': 'Delete failed: $e'};
+      print('[DashboardService] Delete error: $e');
+      return {'success': false, 'error': 'Connection error: $e'};
     }
   }
 
