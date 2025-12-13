@@ -274,7 +274,7 @@ class DashboardService {
   static Future<Map<String, dynamic>> deleteIssue(String issueId) async {
     try {
       final res = await http.delete(
-        Uri.parse('$dashboardUrl/api/admin/issues/$issueId'),
+        Uri.parse('$apiBase/mobile/issues/$issueId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (res.statusCode == 200) {
